@@ -86,16 +86,20 @@ pub fn read_document(path: &Path) -> std::io::Result<DocumentData> {
     })
 }
 
-pub fn save_document(path_str: &str, html_content: &str) -> std::io::Result<()> {
+pub fn save_document(path_str: &str, content: &str) -> std::io::Result<()> {
     let path = PathBuf::from(path_str);
     if let Some(parent) = path.parent() {
-        fs::create_dir_all(parent)?;
+        if !parent.as_os_str().is_empty() {
+            fs::create_dir_all(parent)?;
+        }
     }
 
-    let markdown_text = html_to_markdown_simple(html_content);
-    let tmp_path = path.with_extension("tmp_markview");
-    fs::write(&tmp_path, markdown_text)?;
-    fs::rename(tmp_path, path)?;
+    let markdown_text = if content.contains("<p>") || content.contains("<br>") {
+        html_to_markdown_simple(content)
+    } else {
+        content.to_string()
+    };
+    fs::write(&path, markdown_text)?;
 
     Ok(())
 }

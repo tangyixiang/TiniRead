@@ -197,19 +197,19 @@
 
         <!-- Rendered / Source toggle -->
         <div class="flex items-center bg-[var(--bg-window)] p-0.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
-          <button id="toggle-view-rendered" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm font-medium transition" title="预览模式">
+          <button id="toggle-view-rendered" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm font-medium transition" title="阅读模式">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <span>预览</span>
+            <span>阅读</span>
           </button>
-          <button id="toggle-view-source" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:text-[var(--text-main)] transition" title="源码模式">
+          <button id="toggle-view-source" class="flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:text-[var(--text-main)] transition" title="文本模式">
             <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="16 18 22 12 16 6" />
               <polyline points="8 6 2 12 8 18" />
             </svg>
-            <span>源码</span>
+            <span>文本</span>
           </button>
         </div>
       </div>
@@ -340,8 +340,8 @@
               <!-- Rendered Markdown DOM elements will be injected here -->
             </div>
 
-            <!-- Raw Markdown Source Mode (Hidden by default) -->
-            <textarea id="editor-source" class="w-full h-96 p-4 rounded-xl font-mono text-xs text-[var(--text-main)] bg-[var(--bg-window)] border border-[var(--border-subtle)] outline-none resize-y hidden leading-6" placeholder="输入 Markdown 源码..."></textarea>
+            <!-- Plain Markdown Text Mode (Hidden by default) -->
+            <textarea id="editor-source" class="w-full min-h-[calc(100vh-260px)] p-0 bg-transparent text-[14px] leading-7 text-[var(--text-main)] font-mono outline-none border-none resize-none hidden overflow-hidden placeholder-[var(--text-light)]" placeholder="在此输入 Markdown 纯文本..."></textarea>
 
             <div class="pt-8 pb-10 text-center text-xs text-[var(--text-light)] font-mono">
               — 尽览于此 · MarkView —
@@ -355,6 +355,10 @@
           <div class="flex items-center gap-2">
             <span>当前字数</span>
             <span class="font-mono font-medium text-[var(--text-main)]" id="bottom-stat-words">0 字</span>
+          </div>
+          <div class="flex items-center gap-3 text-[11px] text-[var(--text-light)]">
+            <span id="save-status-text" class="transition-opacity duration-200 opacity-0 font-medium">已保存</span>
+            <span id="shortcut-hint" class="font-mono text-[10px] hidden sm:inline">Ctrl+S 保存</span>
           </div>
         </footer>
       </main>
@@ -746,9 +750,294 @@
       return html.join('\n');
     }
 
+    // ----------------------------------------------------
+    // Markdown Serializer: DOM -> Markdown
+    // ----------------------------------------------------
+    function inlineNodeToMarkdown(node) {
+      if (!node) return '';
+      if (node.nodeType === Node.TEXT_NODE) {
+        return node.textContent;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return '';
+      }
+      const tag = node.tagName.toLowerCase();
+      if (tag === 'button') return '';
+      const childrenMd = Array.from(node.childNodes).map(inlineNodeToMarkdown).join('');
+      
+      if (tag === 'strong' || tag === 'b') {
+        const text = childrenMd.trim();
+        return text ? `**${text}**` : '';
+      }
+      if (tag === 'em' || tag === 'i') {
+        const text = childrenMd.trim();
+        return text ? `*${text}*` : '';
+      }
+      if (tag === 'del' || tag === 's') {
+        const text = childrenMd.trim();
+        return text ? `~~${text}~~` : '';
+      }
+      if (tag === 'mark') {
+        const text = childrenMd.trim();
+        return text ? `==${text}==` : '';
+      }
+      if (tag === 'code' && node.parentElement?.tagName.toLowerCase() !== 'pre') {
+        return `\`${node.textContent}\``;
+      }
+      if (tag === 'a') {
+        const href = node.getAttribute('href') || '#';
+        return `[${childrenMd.trim()}](${href})`;
+      }
+      if (tag === 'img') {
+        const alt = node.getAttribute('alt') || '';
+        const src = node.getAttribute('src') || '';
+        return `![${alt}](${src})`;
+      }
+      if (tag === 'br') {
+        return '\n';
+      }
+      return childrenMd;
+    }
+
+    function domToMarkdown(container) {
+      const parts = [];
+      const children = Array.from(container.childNodes);
+
+      for (let i = 0; i < children.length; i++) {
+        const el = children[i];
+        if (el.nodeType === Node.TEXT_NODE) {
+          const text = el.textContent.trim();
+          if (text) parts.push(text);
+          continue;
+        }
+        if (el.nodeType !== Node.ELEMENT_NODE) continue;
+
+        const tag = el.tagName.toLowerCase();
+
+        // 1. Headings
+        if (/^h[1-6]$/.test(tag)) {
+          const level = parseInt(tag[1], 10);
+          const prefix = '#'.repeat(level);
+          const text = inlineNodeToMarkdown(el).trim();
+          parts.push(`${prefix} ${text}`);
+          continue;
+        }
+
+        // 2. Horizontal Rules
+        if (tag === 'hr') {
+          parts.push('---');
+          continue;
+        }
+
+        // 3. Code Blocks
+        const preEl = tag === 'pre' ? el : el.querySelector('pre');
+        if (preEl) {
+          const codeEl = preEl.querySelector('code') || preEl;
+          const langEl = el.querySelector('span.font-mono');
+          const lang = langEl ? langEl.textContent.trim() : '';
+          const code = (codeEl.innerText || codeEl.textContent || '').replace(/\r\n/g, '\n').replace(/\n$/, '');
+          const langHeader = (lang && lang !== 'plaintext') ? lang : '';
+          parts.push(`\`\`\`${langHeader}\n${code}\n\`\`\``);
+          continue;
+        }
+
+        // 4. Task items (div with checkbox)
+        const checkbox = el.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+          const label = el.querySelector('span') || el;
+          const taskText = inlineNodeToMarkdown(label).trim();
+          const mark = checkbox.checked ? 'x' : ' ';
+          parts.push(`- [${mark}] ${taskText}`);
+          continue;
+        }
+
+        // 5. Unordered List
+        if (tag === 'ul') {
+          const items = Array.from(el.querySelectorAll(':scope > li')).map(li => {
+            return `- ${inlineNodeToMarkdown(li).trim()}`;
+          });
+          if (items.length > 0) parts.push(items.join('\n'));
+          continue;
+        }
+
+        // 6. Ordered List
+        if (tag === 'ol') {
+          const items = Array.from(el.querySelectorAll(':scope > li')).map((li, idx) => {
+            return `${idx + 1}. ${inlineNodeToMarkdown(li).trim()}`;
+          });
+          if (items.length > 0) parts.push(items.join('\n'));
+          continue;
+        }
+
+        // 7. Callouts & Blockquotes
+        if (tag === 'blockquote' || el.classList.contains('callout') || el.className.includes('callout-bg')) {
+          const titleEl = el.querySelector('.font-semibold');
+          const alertType = titleEl ? titleEl.textContent.trim().toUpperCase() : '';
+          const validAlerts = ['NOTE', 'TIP', 'WARNING', 'IMPORTANT', 'CAUTION'];
+          
+          const bodyClone = el.cloneNode(true);
+          bodyClone.querySelectorAll('.font-semibold, .shrink-0').forEach(n => n.remove());
+          const bodyText = inlineNodeToMarkdown(bodyClone).trim();
+          const lines = bodyText.split('\n').filter(l => l.trim().length > 0);
+
+          if (validAlerts.includes(alertType)) {
+            let calloutLines = [`> [!${alertType}]`];
+            lines.forEach(l => calloutLines.push(`> ${l}`));
+            parts.push(calloutLines.join('\n'));
+          } else {
+            parts.push(lines.map(l => `> ${l}`).join('\n'));
+          }
+          continue;
+        }
+
+        // 8. Tables
+        const tableEl = tag === 'table' ? el : el.querySelector('table');
+        if (tableEl) {
+          const rows = Array.from(tableEl.querySelectorAll('tr'));
+          if (rows.length > 0) {
+            const tableLines = [];
+            rows.forEach((tr, rIdx) => {
+              const cells = Array.from(tr.querySelectorAll('th, td')).map(c => inlineNodeToMarkdown(c).trim());
+              tableLines.push(`| ${cells.join(' | ')} |`);
+              if (rIdx === 0) {
+                tableLines.push(`| ${cells.map(() => '---').join(' | ')} |`);
+              }
+            });
+            parts.push(tableLines.join('\n'));
+            continue;
+          }
+        }
+
+        // 9. Standard paragraphs or divs
+        const pText = inlineNodeToMarkdown(el).trim();
+        if (pText) {
+          parts.push(pText);
+        }
+      }
+
+      return parts.join('\n\n');
+    }
+
+    // ----------------------------------------------------
+    // State Management: Current Markdown, Save & History
+    // ----------------------------------------------------
+    function getCurrentMarkdown() {
+      if (editorSource && !editorSource.classList.contains('hidden')) {
+        return editorSource.value;
+      }
+      return domToMarkdown(editorContent);
+    }
+
+    // Undo / Redo History Stack
+    let historyStack = [];
+    let historyIndex = -1;
+    const MAX_HISTORY = 40;
+    let isApplyingHistory = false;
+
+    function pushHistoryState() {
+      if (isApplyingHistory) return;
+      const currentMd = getCurrentMarkdown();
+      if (historyIndex >= 0 && historyStack[historyIndex] === currentMd) {
+        return;
+      }
+      if (historyIndex < historyStack.length - 1) {
+        historyStack = historyStack.slice(0, historyIndex + 1);
+      }
+      historyStack.push(currentMd);
+      if (historyStack.length > MAX_HISTORY) {
+        historyStack.shift();
+      }
+      historyIndex = historyStack.length - 1;
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        applyHistoryState(historyStack[historyIndex]);
+        showSaveStatus('已撤销');
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        applyHistoryState(historyStack[historyIndex]);
+        showSaveStatus('已恢复');
+      }
+    }
+
+    function applyHistoryState(md) {
+      isApplyingHistory = true;
+      currentRawMarkdown = md;
+      editorSource.value = md;
+      if (editorSource.classList.contains('hidden')) {
+        editorContent.innerHTML = parseMarkdownToHtml(md);
+        bindCodeCopyButtons();
+        bindTaskCheckboxes();
+      }
+      const count = (editorContent.innerText || editorSource.value || '').trim().length;
+      if (bottomStatWords) bottomStatWords.textContent = count + ' 字';
+      refreshToc();
+      isApplyingHistory = false;
+    }
+
+    // Save Status Feedback
+    let saveStatusTimer = null;
+    let lastSavedContent = '';
+
+    function showSaveStatus(text, duration = 2000) {
+      const statusEl = document.getElementById('save-status-text');
+      if (!statusEl) return;
+      statusEl.textContent = text;
+      if (text === '已保存') {
+        statusEl.className = 'transition-opacity duration-200 opacity-100 font-medium text-[var(--text-light)]';
+      } else if (text === '未保存' || text === '编辑中...') {
+        statusEl.className = 'transition-opacity duration-200 opacity-100 font-medium text-amber-500';
+      } else if (text === '保存中...') {
+        statusEl.className = 'transition-opacity duration-200 opacity-100 font-medium text-blue-500';
+      } else if (text === '保存失败') {
+        statusEl.className = 'transition-opacity duration-200 opacity-100 font-medium text-rose-500';
+      } else {
+        statusEl.className = 'transition-opacity duration-200 opacity-100 font-medium text-[var(--text-main)]';
+      }
+      clearTimeout(saveStatusTimer);
+      if (duration > 0) {
+        saveStatusTimer = setTimeout(() => {
+          statusEl.classList.remove('opacity-100');
+          statusEl.classList.add('opacity-0');
+        }, duration);
+      }
+    }
+
+    let autoSaveTimer = null;
+    let historyDebounceTimer = null;
+
+    async function saveDocument(isManual = false) {
+      clearTimeout(autoSaveTimer);
+      const markdownText = getCurrentMarkdown();
+
+      if (!isManual && markdownText === lastSavedContent) {
+        return;
+      }
+
+      showSaveStatus('保存中...', 0);
+      const curTitle = document.getElementById('header-doc-title')?.textContent || '无标题文档';
+      const targetPath = currentDocPath || '未命名文档.md';
+
+      try {
+        await saveToBackend(targetPath, curTitle, markdownText);
+        lastSavedContent = markdownText;
+        showSaveStatus('已保存');
+      } catch (err) {
+        console.error('Save failed:', err);
+        showSaveStatus('保存失败');
+      }
+    }
+
     // Load and render raw Markdown text
     function loadAndRenderMarkdown(rawText, filename) {
       currentRawMarkdown = rawText;
+      lastSavedContent = rawText;
       let title = filename || '无标题文档';
       
       // Extract title from first H1 if available
@@ -771,6 +1060,10 @@
       bindCodeCopyButtons();
       bindTaskCheckboxes();
       updateWordStats();
+
+      // Reset history stack for this loaded document
+      historyStack = [rawText];
+      historyIndex = 0;
     }
 
     function bindCodeCopyButtons() {
@@ -798,6 +1091,8 @@
             }
           }
           updateWordStats();
+          pushHistoryState();
+          saveDocument(false);
         };
       });
     }
@@ -810,24 +1105,41 @@
     const bottomStatWords = document.getElementById('bottom-stat-words');
     const dynamicToc = document.getElementById('dynamic-toc');
 
+    function adjustTextareaHeight() {
+      if (!editorSource || editorSource.classList.contains('hidden')) return;
+      editorSource.style.height = 'auto';
+      editorSource.style.height = Math.max(editorSource.scrollHeight, window.innerHeight - 260) + 'px';
+    }
+
+    window.addEventListener('resize', adjustTextareaHeight);
+
     btnViewRendered.addEventListener('click', () => {
+      if (editorSource.classList.contains('hidden')) return;
       btnViewRendered.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm font-medium transition";
       btnViewSource.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:text-[var(--text-main)] transition";
       
-      // Update rendered view from source textarea
       const curTitle = document.getElementById('header-doc-title')?.textContent || '无标题文档';
       loadAndRenderMarkdown(editorSource.value, curTitle);
       editorContent.classList.remove('hidden');
       editorSource.classList.add('hidden');
+      pushHistoryState();
+      refreshToc();
     });
 
     btnViewSource.addEventListener('click', () => {
+      if (!editorSource.classList.contains('hidden')) return;
       btnViewSource.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[var(--bg-card)] text-[var(--text-main)] shadow-sm font-medium transition";
       btnViewRendered.className = "flex items-center gap-1.5 px-2.5 py-1 rounded-md hover:text-[var(--text-main)] transition";
       
+      // Convert current rendered DOM into clean markdown
+      const currentMd = domToMarkdown(editorContent);
+      editorSource.value = currentMd;
       editorContent.classList.add('hidden');
       editorSource.classList.remove('hidden');
+      adjustTextareaHeight();
       editorSource.focus();
+      pushHistoryState();
+      refreshToc();
     });
 
     // Theme Switch
@@ -888,21 +1200,38 @@
       if (bottomStatWords) {
         bottomStatWords.textContent = count + ' 字';
       }
-      
-      clearTimeout(window._saveTimer);
-      window._saveTimer = setTimeout(() => {
-        if (currentDocPath) {
-          const curTitle = document.getElementById('header-doc-title')?.textContent || '无标题文档';
-          saveToBackend(currentDocPath, curTitle, editorContent.innerHTML);
-        }
-      }, 500);
-
       refreshToc();
     }
 
     function refreshToc() {
-      const headings = editorContent.querySelectorAll('h1, h2, h3, h4');
+      if (!dynamicToc) return;
       dynamicToc.innerHTML = '';
+
+      if (editorSource && !editorSource.classList.contains('hidden')) {
+        const lines = editorSource.value.split('\n');
+        lines.forEach((line, idx) => {
+          const match = line.match(/^(#{1,4})\s+(.+)/);
+          if (match) {
+            const level = match[1].length;
+            const text = match[2].trim();
+            const a = document.createElement('a');
+            a.href = '#';
+            a.textContent = text;
+            a.className = "block truncate hover:text-[var(--text-main)] transition " + 
+              (level === 1 ? 'font-bold text-[var(--text-main)]' : 
+               level === 2 ? 'pl-2 font-medium' : 'pl-4 text-[10px]');
+            a.onclick = (e) => {
+              e.preventDefault();
+              const lineHeight = 28;
+              reader.scrollTo({ top: idx * lineHeight, behavior: 'smooth' });
+            };
+            dynamicToc.appendChild(a);
+          }
+        });
+        return;
+      }
+
+      const headings = editorContent.querySelectorAll('h1, h2, h3, h4');
       headings.forEach((h, idx) => {
         if (!h.id) h.id = 'heading-' + idx;
         const a = document.createElement('a');
@@ -937,10 +1266,59 @@
         document.getElementById('header-doc-title').textContent = h1.textContent.trim();
       }
       updateWordStats();
+      showSaveStatus('未保存', 0);
+      clearTimeout(historyDebounceTimer);
+      historyDebounceTimer = setTimeout(pushHistoryState, 600);
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => saveDocument(false), 1000);
     });
 
     editorSource.addEventListener('input', () => {
+      adjustTextareaHeight();
       updateWordStats();
+      showSaveStatus('未保存', 0);
+      clearTimeout(historyDebounceTimer);
+      historyDebounceTimer = setTimeout(pushHistoryState, 600);
+      clearTimeout(autoSaveTimer);
+      autoSaveTimer = setTimeout(() => saveDocument(false), 1000);
+    });
+
+    // Keyboard Shortcuts: Platform-aware (macOS vs Windows/Linux)
+    const shortcutHint = document.getElementById('shortcut-hint');
+    if (shortcutHint) {
+      shortcutHint.textContent = isMac ? 'Cmd+S 保存' : 'Ctrl+S 保存';
+    }
+
+    window.addEventListener('keydown', (e) => {
+      const modKey = isMac ? e.metaKey : e.ctrlKey;
+
+      // 1. Save: Cmd+S / Ctrl+S
+      if (modKey && !e.altKey && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        saveDocument(true);
+        return;
+      }
+
+      // 2. Redo: Mac: Cmd+Shift+Z, Windows: Ctrl+Y or Ctrl+Shift+Z
+      const isRedo = (isMac && modKey && e.shiftKey && e.key.toLowerCase() === 'z') ||
+                     (!isMac && ((modKey && e.key.toLowerCase() === 'y') || (modKey && e.shiftKey && e.key.toLowerCase() === 'z')));
+      if (isRedo) {
+        e.preventDefault();
+        redo();
+        return;
+      }
+
+      // 3. Undo: Cmd+Z / Ctrl+Z
+      if (modKey && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z') {
+        e.preventDefault();
+        undo();
+        return;
+      }
+    });
+
+    // Auto-save on window blur
+    window.addEventListener('blur', () => {
+      saveDocument(false);
     });
 
     // Selection Bubble Toolbar
@@ -977,6 +1355,8 @@
         e.preventDefault();
         document.execCommand(btn.getAttribute('data-cmd'), false, null);
         updateWordStats();
+        pushHistoryState();
+        saveDocument(false);
       });
     });
 
@@ -999,12 +1379,16 @@
       e.preventDefault();
       document.execCommand('formatBlock', false, 'H1');
       updateWordStats();
+      pushHistoryState();
+      saveDocument(false);
     });
 
     document.getElementById('fmt-h2').addEventListener('mousedown', (e) => {
       e.preventDefault();
       document.execCommand('formatBlock', false, 'H2');
       updateWordStats();
+      pushHistoryState();
+      saveDocument(false);
     });
 
     function applyHighlight(colorClass) {
@@ -1016,6 +1400,8 @@
       mark.appendChild(range.extractContents());
       range.insertNode(mark);
       updateWordStats();
+      pushHistoryState();
+      saveDocument(false);
     }
 
     function wrapWithTag(tag, className) {
@@ -1027,6 +1413,8 @@
       el.appendChild(range.extractContents());
       range.insertNode(el);
       updateWordStats();
+      pushHistoryState();
+      saveDocument(false);
     }
 
     // Right-Click Context Menu
@@ -1076,14 +1464,21 @@
       document.execCommand('insertHTML', false, htmlToInsert);
       bindTaskCheckboxes();
       updateWordStats();
+      pushHistoryState();
+      saveDocument(false);
+    }
+
+    function getTauriInvoker() {
+      return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || window.__TAURI_INTERNALS__?.invoke || null;
     }
 
     // Workspace & Document Loading (Supports Tauri IPC & Web HTTP)
     async function loadWorkspace() {
       try {
         let data = [];
-        if (window.__TAURI__?.core?.invoke) {
-          data = await window.__TAURI__.core.invoke('scan_workspace', { path: '' });
+        const invoker = getTauriInvoker();
+        if (invoker) {
+          data = await invoker('scan_workspace', { path: '' });
         } else {
           const res = await fetch('/api/workspace');
           if (res.ok) data = await res.json();
@@ -1139,11 +1534,15 @@
     }
 
     async function loadDocument(path) {
+      if (currentDocPath && currentDocPath !== path) {
+        await saveDocument(true);
+      }
       currentDocPath = path;
       try {
         let doc = null;
-        if (window.__TAURI__?.core?.invoke) {
-          doc = await window.__TAURI__.core.invoke('read_document', { path });
+        const invoker = getTauriInvoker();
+        if (invoker) {
+          doc = await invoker('read_document', { path });
         } else {
           const res = await fetch('/api/read?path=' + encodeURIComponent(path));
           if (res.ok) doc = await res.json();
@@ -1157,23 +1556,26 @@
     }
 
     async function saveToBackend(path, title, htmlContent) {
-      try {
-        if (window.__TAURI__?.core?.invoke) {
-          await window.__TAURI__.core.invoke('save_document', { path, htmlContent });
-        } else {
-          await fetch('/api/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ path, title, html_content: htmlContent })
-          });
-        }
-      } catch (e) {
-        console.error(e);
+      const invoker = getTauriInvoker();
+      if (invoker) {
+        await invoker('save_document', { path, htmlContent, html_content: htmlContent });
+        return;
+      }
+      const res = await fetch('/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, title, html_content: htmlContent })
+      });
+      if (!res.ok) {
+        throw new Error('Save HTTP error: ' + res.status);
       }
     }
 
     // New Doc Button
-    document.getElementById('add-doc-btn').addEventListener('click', () => {
+    document.getElementById('add-doc-btn').addEventListener('click', async () => {
+      if (currentDocPath) {
+        await saveDocument(true);
+      }
       currentDocPath = '';
       loadAndRenderMarkdown('# 新建文档\n\n点击开始编写内容...', '新建文档');
       editorContent.focus();

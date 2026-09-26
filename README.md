@@ -1,75 +1,1065 @@
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><h1 class="text-2xl font-bold text-[var(--text-main)] tracking-tight mt-6 mb-2" id="heading-0">MarkView 本地 Markdown 编辑与阅读器</h1>
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3">基于 Rust 构建的现代化本地 Markdown 知识阅读与所见即所得编辑器。
+# Software Model 产品需求文档
 
+## 1. 产品概述
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><h2 class="text-xl font-bold text-[var(--text-main)] tracking-tight mt-5 mb-2" id="heading-1">1. 核心设计理念</h2>
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3">以数字排版工艺为导向，打造极简、克制且耐看的本地 Markdown 阅读与编辑工具。消解工具界面的压迫感，呈现纯粹的内容本位体验。
+==Software Model 是一个面向软件开发者的**软件结构建模工具**。==
 
+`它的核心目标不是展示代码，也不是简单绘制流程图，而是把一个真实的软件项目从代码中逐步抽象成一个可以理解、浏览、分析和维护的软件模型。`
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="p-4 rounded-2xl bg-[var(--callout-bg)] border border-[var(--callout-border)] flex items-start gap-3 text-xs leading-relaxed text-[var(--text-muted)] my-3">
-<div class="w-5 h-5 rounded-lg bg-[var(--text-main)] text-[var(--bg-card)] flex items-center justify-center shrink-0 text-[10px] font-bold mt-0.5">!</div>
-<div>设计信条：界面的克制，是对阅读者最深的敬意。所有格式调整无需记忆复杂 Markdown 语法符号，交互直达。</div>
-</div>
+软件模型按照以下层次组织：
 
+**Business → Workflow → Business Logic → Technical Implementation → Code**
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><h2 class="text-xl font-bold text-[var(--text-main)] tracking-tight mt-5 mb-2" id="heading-2">2. 交互功能指南</h2>
-<ul class="list-disc pl-5 my-2 space-y-1 text-xs text-[var(--text-muted)]">
-<li><strong class="font-semibold text-[var(--text-main)]">原地即时编辑</strong>：在正文中任意位置点击即可直接输入，修改实时增量保存。</li>
-<li><strong class="font-semibold text-[var(--text-main)]">选中文本浮动气泡</strong>：鼠标划词选中文本，上方立即弹出浮动格式工具条（加粗、斜体、删除线、黄色/绿色荧光高亮、行内代码、标题转换）。</li>
-<li><strong class="font-semibold text-[var(--text-main)]">右键傻瓜式添加块</strong>：在编辑区任意位置点击鼠标右键，唤起结构化块级菜单，支持一键插入一级/二级/三级标题、待办清单、提示引语盒、代码块与分割线。</li>
-<li><strong class="font-semibold text-[var(--text-main)]">多栏布局切换</strong>：支持三栏（工作台）、双栏（文档列表+正文）与单栏（专注全屏）即时切换。</li>
-<li><strong class="font-semibold text-[var(--text-main)]">拖拽即开</strong>：支持直接拖拽本地 .md 文件或文件夹到窗口释放打开。</li>
-</ul>
-<h2 class="text-xl font-bold text-[var(--text-main)] tracking-tight mt-5 mb-2" id="heading-3">3. 功能清单</h2>
+即：
 
+> 业务目标 → 业务流程 → 业务逻辑 → 技术实现 → 实际代码
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[var(--bg-window)] cursor-pointer transition">
-<input type="checkbox" checked="" class="w-4 h-4 rounded-md border-[var(--border-strong)] text-[var(--text-main)] focus:ring-0">
-<span class="line-through text-[var(--text-light)] text-xs">现代化纸质排版与 3 套精选主题（浅灰冷白、温润羊皮、深邃极夜）</span>
-</div>
+用户可以从较高层次理解整个软件，也可以不断向下展开，最终定位到真实代码。
 
+同时，所有这些对象都属于同一个完整的软件模型。不同界面展示的是这个模型的不同视图，而不是彼此独立的 Graph。
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[var(--bg-window)] cursor-pointer transition">
-<input type="checkbox" checked="" class="w-4 h-4 rounded-md border-[var(--border-strong)] text-[var(--text-main)] focus:ring-0">
-<span class="line-through text-[var(--text-light)] text-xs">划词选中文本浮动格式气泡</span>
-</div>
+---
 
+# 2. 产品核心目标
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[var(--bg-window)] cursor-pointer transition">
-<input type="checkbox" checked="" class="w-4 h-4 rounded-md border-[var(--border-strong)] text-[var(--text-main)] focus:ring-0">
-<span class="line-through text-[var(--text-light)] text-xs">右键傻瓜式插入 H1/H2/H3 标题与块组件</span>
-</div>
+产品需要解决以下问题：
 
+### 2.1 理解已有软件
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[var(--bg-window)] cursor-pointer transition">
-<input type="checkbox" checked="" class="w-4 h-4 rounded-md border-[var(--border-strong)] text-[var(--text-main)] focus:ring-0">
-<span class="line-through text-[var(--text-light)] text-xs">原生 Rust 后端本地文件安全读写与扫描</span>
-</div>
+用户面对一个已经存在的代码仓库时，可以快速理解：
 
+- 这个项目有哪些业务目标
+- 每个业务目标包含哪些 Workflow
+- Workflow 如何一步步完成
+- 每一步包含哪些业务逻辑
+- **这些业务逻辑由什么技术组件实现**
+- 最终对应到哪些代码
+- ==不同代码、组件、业务逻辑之间有什么关系==
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="flex items-center gap-3 p-1.5 rounded-xl hover:bg-[var(--bg-window)] cursor-pointer transition">
-<input type="checkbox" class="w-4 h-4 rounded-md border-[var(--border-strong)] text-[var(--text-main)] focus:ring-0">
-<span class="text-[var(--text-muted)] text-xs">文档双向链接（WikiLink）快速关联</span>
-</div>
+---
 
+### 2.2 建立代码与业务之间的联系
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="overflow-x-auto my-3 border border-[var(--border-subtle)] rounded-xl"><table class="w-full text-left text-xs"><thead class="bg-[var(--bg-window)] border-b border-[var(--border-subtle)] text-[var(--text-muted)]"><tr><th class="py-2.5 px-3 font-semibold">维度</th><th class="py-2.5 px-3 font-semibold">MarkView</th><th class="py-2.5 px-3 font-semibold">传统编辑器</th></tr></thead><tbody class="divide-y divide-[var(--border-subtle)]"><tr class="hover:bg-[var(--bg-window)]/50"><td class="py-2.5 px-3 text-[var(--text-main)]"><strong class="font-semibold text-[var(--text-main)]">渲染体验</strong></td><td class="py-2.5 px-3 text-[var(--text-main)]">所见即所得流式排版</td><td class="py-2.5 px-3 text-[var(--text-main)]">双栏切分预览或纯文本</td></tr><tr class="hover:bg-[var(--bg-window)]/50"><td class="py-2.5 px-3 text-[var(--text-main)]"><strong class="font-semibold text-[var(--text-main)]">内存开销</strong></td><td class="py-2.5 px-3 text-[var(--text-main)]">极低（约 2.5 MB）</td><td class="py-2.5 px-3 text-[var(--text-main)]">臃肿（数百 MB）</td></tr><tr class="hover:bg-[var(--bg-window)]/50"><td class="py-2.5 px-3 text-[var(--text-main)]"><strong class="font-semibold text-[var(--text-main)]">操作方式</strong></td><td class="py-2.5 px-3 text-[var(--text-main)]">划词气泡 + 右键傻瓜插入</td><td class="py-2.5 px-3 text-[var(--text-main)]">强制记忆符号标记</td></tr></tbody></table></div>
-<h2 class="text-xl font-bold text-[var(--text-main)] tracking-tight mt-5 mb-2" id="heading-4">4. 架构代码片段</h2>
+传统代码结构通常只能看到：
 
+```text
+File
+ └── Class
+      └── Function
+           └── Code
+```
 
-<p class="text-sm leading-7 text-[var(--text-muted)] mb-3"><div class="rounded-2xl border border-[var(--border-subtle)] bg-[var(--bg-window)] overflow-hidden my-3">
-<div class="flex items-center justify-between px-4 py-2 border-b border-[var(--border-subtle)] text-[11px] text-[var(--text-muted)]">
-<span class="font-mono font-medium text-[var(--text-main)]">rust</span>
-<button class="copy-btn hover:text-[var(--text-main)] transition font-medium" data-code="pub struct Document {
-pub title: String,
-pub path: std::path::PathBuf,
-pub word_count: usize,
-}">复制</button>
-</div>
-<pre class="p-4 text-xs font-mono overflow-x-auto leading-6 text-[var(--text-main)]"><code>pub struct Document {
-pub title: String,
-pub path: std::path::PathBuf,
-pub word_count: usize,
-}</code></pre>
-</div>
+Software Model 需要增加更高层次的语义：
 
+```text
+Business
+   ↓
+Workflow
+   ↓
+Business Logic
+   ↓
+Technical Implementation
+   ↓
+Code
+```
+
+用户能够从业务一路追踪到代码，也能够从代码反向追踪到它所支撑的业务。
+
+---
+
+### 2.3 让软件可以被“逐层理解”
+
+产品不要求用户一次看到整个系统。
+
+用户应该能够：
+
+1. 先看到系统有哪些业务
+2. 选择一个业务
+3. 查看这个业务包含哪些 Workflow
+4. 选择 Workflow
+5. 查看 Workflow 的步骤
+6. 查看某个步骤包含哪些 Business Logic
+7. 查看 Business Logic 如何被技术实现
+8. 最终定位到实际代码
+
+因此产品核心交互是：
+
+---
+
+# 3. 软件模型的五个层级
+
+## 3.1 Business
+
+Business 表示软件所服务的**业务目标或业务能力**。
+
+它回答：
+
+> “这个系统为什么需要存在？”
+
+Business 不应该直接对应某个文件、类或者函数。
+
+它是对软件业务目的的高层抽象。
+
+一个 Business 可以包含多个 Workflow。
+
+---
+
+## 3.2 Workflow
+
+Workflow 表示完成一个 Business 所需要经历的完整业务流程。
+
+它回答：
+
+> “这个业务是如何完成的？”
+
+Workflow 由多个 Workflow Step 组成。
+
+Workflow Step 需要能够表达：
+
+- 顺序
+- 条件
+- 输入
+- 输出
+- 状态变化
+- 前置条件
+- 后续步骤
+
+Workflow 应该能够清晰表达一个业务过程从开始到结束的完整路径。
+
+---
+
+## 3.3 Business Logic
+
+Business Logic 表示 Workflow 某一步中的具体业务规则和行为。
+
+它回答：
+
+> “这一步具体需要执行什么业务规则？”
+
+Business Logic 不等同于代码。
+
+同一个 Business Logic 可能由多个技术实现共同完成。
+
+Business Logic 也可能对应多个代码位置。
+
+---
+
+## 3.4 Technical Implementation
+
+Technical Implementation 是 Business Logic 和实际代码之间的桥梁。
+
+它回答：
+
+> “这个业务逻辑在软件系统中是通过什么技术结构实现的？”
+
+例如：
+
+- 某个服务
+- 某个模块
+- 某个组件
+- 某个接口
+- 某个数据处理过程
+- 某个系统能力
+
+Technical Implementation 的作用是避免 Business Logic 直接和大量代码产生混乱的多对多关系。
+
+---
+
+## 3.5 Code
+
+Code 是模型最底层的事实来源。
+
+它表示真实代码中的：
+
+- 文件
+- 类
+- 函数
+- 方法
+- Import
+- Call
+- Reference
+- 继承关系
+- 实现关系
+
+Code 层不能由用户主观描述替代。
+
+它必须能够定位到真实项目中的代码位置。
+
+---
+
+# 4. 软件模型必须是一个统一整体
+
+这是产品非常重要的要求。
+
+整个项目只能存在一个统一的软件模型。
+
+例如：
+
+```text
+Project
+│
+├── Business
+│    ├── Workflow
+│    │    ├── Workflow Step
+│    │    │    ├── Business Logic
+│    │    │    │    └── Technical Implementation
+│    │    │    │           └── Code
+│    │    │    └── ...
+│    │    └── ...
+│    └── ...
+│
+└── Code Model
+     ├── File
+     ├── Class
+     ├── Function
+     └── ...
+```
+
+这些对象之间存在真实关系。
+
+产品中的 Canvas、Graph、Explorer 等界面，只是对这个统一模型进行不同方式的展示。
+
+**不能把每个 Workflow、每个页面或者每个节点做成互相独立的 Graph。**
+
+---
+
+# 5. 用户核心使用流程
+
+用户进入一个项目后，核心流程应该是：
+
+### 第一步：打开项目
+
+用户选择一个软件项目。
+
+系统建立项目的软件模型。
+
+---
+
+### 第二步：查看整体模型
+
+用户首先看到项目的高层结构。
+
+重点不是代码，而是：
+
+- Business
+- Workflow
+- Workflow Step
+- Business Logic
+
+让用户先理解系统整体业务结构。
+
+---
+
+### 第三步：逐层展开
+
+用户点击一个节点后，可以继续展开它的下一层。
+
+例如：
+
+```text
+Business
+    ↓ 点击
+Workflow
+    ↓ 点击
+Workflow Step
+    ↓ 点击
+Business Logic
+    ↓ 点击
+Technical Implementation
+    ↓ 点击
+Code
+```
+
+每一次展开，都应该让用户进一步理解当前对象。
+
+---
+
+### 第四步：定位代码
+
+当用户进入 Code 层时，可以直接定位到实际代码。
+
+用户应该能够知道：
+
+> “这个业务逻辑最终是由这里的代码实现的。”
+
+---
+
+### 第五步：反向追踪
+
+用户也应该可以从代码向上追踪：
+
+```text
+Code
+ ↑
+Technical Implementation
+ ↑
+Business Logic
+ ↑
+Workflow
+ ↑
+Business
+```
+
+从而回答：
+
+> “修改这个代码，可能影响什么业务？”
+
+---
+
+# 6. 无限画布
+
+产品的核心交互界面采用**无限画布**。
+
+画布不是传统的流程图编辑器，也不是单纯的 Graph 可视化。
+
+它应该体现：
+
+---
+
+## 6.1 Workflow 的方向
+
+Workflow 采用**垂直方向**组织。
+
+例如：
+
+```text
+Step 1
+  ↓
+Step 2
+  ↓
+Step 3
+  ↓
+Step 4
+```
+
+让用户能够直观看到流程从上到下的发展。
+
+---
+
+## 6.2 点击节点后横向展开
+
+当用户点击某个节点时，该节点的下一层模型向**水平方向展开**。
+
+例如：
+
+```text
+             Business Logic A
+                    →
+Workflow Step →    Business Logic B
+                    →
+             Business Logic C
+```
+
+继续点击其中一个 Business Logic：
+
+```text
+             Business Logic
+                    →
+             Technical Implementation
+                    →
+                    Code
+```
+
+因此整个模型最终形成一种：
+
+的空间结构。
+
+---
+
+# 7. 节点
+
+模型中的每一个对象都应该是一个节点。
+
+节点至少需要能够表达：
+
+- 名称
+- 类型
+- 描述
+- 所属层级
+- 上下级关系
+- 关联对象
+- 来源
+- 状态
+
+不同类型节点需要具有不同的视觉识别。
+
+用户应该能够快速区分：
+
+- Business
+- Workflow
+- Workflow Step
+- Business Logic
+- Technical Implementation
+- Code
+
+---
+
+# 8. 节点展开
+
+节点应该支持展开和收起。
+
+点击节点后：
+
+1. 显示它的下一层内容
+2. 建立视觉连接
+3. 保持原节点位置稳定
+4. 新内容从节点旁边展开
+5. 用户可以继续向下展开
+
+用户可以只展开自己感兴趣的部分。
+
+因此画布不应该默认把整个项目一次性展开。
+
+---
+
+# 9. 模型导航
+
+用户需要能够在模型中自由移动。
+
+包括：
+
+- 拖动画布
+- 缩放
+- 展开节点
+- 收起节点
+- 点击节点
+- 查看节点详情
+- 跳转到相关节点
+- 返回上一级
+- 从当前节点继续向下探索
+
+整个操作过程应该保持连续的模型上下文。
+
+---
+
+# 10. Graph 视图
+
+Graph 是软件模型的一种辅助视图。
+
+Graph 不应该成为产品的主要入口。
+
+也不应该默认展示整个项目所有节点。
+
+Graph 应该围绕当前对象展示相关关系。
+
+例如用户选中一个 Business Logic：
+
+```text
+             Workflow
+                │
+                ↓
+          Business Logic
+             ↙       ↘
+       Implementation  Implementation
+              │
+             Code
+```
+
+Graph 主要用于查看：
+
+- 上游关系
+- 下游关系
+- 调用关系
+- 依赖关系
+- 引用关系
+- 实现关系
+- 影响关系
+
+因此：
+
+> Graph 是模型关系的可视化，而不是模型本身。
+
+---
+
+# 11. Code 视图
+
+产品需要提供代码查看能力。
+
+用户进入 Code 后，可以：
+
+- 浏览项目文件
+- 查看文件内容
+- 查看代码结构
+- 查看类
+- 查看函数
+- 查看方法
+- 定位具体代码位置
+- 从模型节点跳转到代码
+- 从代码返回模型节点
+
+代码查看的目的不是替代专业 IDE。
+
+重点是：
+
+---
+
+# 12. 模型与代码绑定
+
+Software Model 的核心价值之一，是建立：
+
+之间的关系。
+
+用户应该能够将：
+
+- Business Logic
+- Technical Implementation
+
+关联到实际代码。
+
+关联必须能够定位到具体代码位置。
+
+例如能够定位到：
+
+- 文件
+- 类
+- 函数
+- 方法
+- 代码行范围
+
+---
+
+# 13. 自动分析代码
+
+当用户导入项目后，系统应该自动分析代码。
+
+系统需要识别：
+
+- 项目文件
+- 编程语言
+- 文件结构
+- 类
+- 函数
+- 方法
+- Import
+- Call
+- Reference
+- 继承
+- 实现
+- 依赖
+
+并形成底层 Code Model。
+
+---
+
+# 14. 自动建立代码关系
+
+系统需要自动发现代码之间的结构关系。
+
+例如：
+
+```text
+Function A
+    ↓ calls
+Function B
+    ↓ calls
+Function C
+```
+
+以及：
+
+```text
+Class A
+    ↓ extends
+Class B
+```
+
+这些关系应该进入统一的软件模型。
+
+---
+
+# 15. AI 辅助建模
+
+AI 的作用不是替代整个软件模型。
+
+AI 主要负责：
+
+AI 可以帮助：
+
+- 从代码推测 Business Logic
+- 推测 Workflow
+- 推测代码对应的业务含义
+- 建议节点之间的关系
+- 解释复杂代码
+- 分析代码影响范围
+- 发现可能缺失的模型关系
+
+---
+
+# 16. AI 结果必须可确认
+
+AI 推测的内容不能直接当作绝对事实。
+
+系统需要明确区分：
+
+- 用户创建
+- 系统分析
+- AI 推测
+- 用户确认
+
+AI 提出的模型关系和语义应该允许用户：
+
+- 接受
+- 修改
+- 拒绝
+- 删除
+- 重新定义
+
+最终模型应该由：
+
+共同组成。
+
+---
+
+# 17. 模型编辑
+
+用户应该可以直接编辑模型。
+
+包括：
+
+### Business
+
+可以：
+
+- 创建
+- 修改
+- 删除
+- 添加描述
+
+### Workflow
+
+可以：
+
+- 创建
+- 修改
+- 删除
+- 调整步骤
+- 调整步骤顺序
+
+### Workflow Step
+
+可以：
+
+- 创建
+- 修改
+- 删除
+- 调整顺序
+- 建立条件关系
+
+### Business Logic
+
+可以：
+
+- 创建
+- 修改
+- 删除
+- 调整描述
+- 关联实现
+
+### Technical Implementation
+
+可以：
+
+- 创建
+- 修改
+- 删除
+- 关联代码
+
+---
+
+# 18. 关系管理
+
+系统需要支持模型对象之间建立关系。
+
+关系至少包括：
+
+- 包含
+- 分解
+- 实现
+- 调用
+- 引用
+- 导入
+- 继承
+- 实现
+- 依赖
+- 触发
+- 顺序
+- 条件分支
+
+用户应该能够看到关系，也应该能够编辑属于业务模型的关系。
+
+代码结构关系主要由系统自动分析产生。
+
+---
+
+# 19. 影响分析
+
+用户修改一个代码节点或者技术实现时，需要能够查看可能影响的上层模型。
+
+例如：
+
+```text
+Code
+ ↓
+Technical Implementation
+ ↓
+Business Logic
+ ↓
+Workflow
+ ↓
+Business
+```
+
+系统需要帮助用户回答：
+
+> “修改这里，可能影响哪些业务？”
+
+反方向也需要支持：
+
+> “这个业务发生变化，哪些代码可能需要修改？”
+
+---
+
+# 20. 增量更新
+
+项目代码发生变化后，不应该要求用户重新建立整个模型。
+
+系统应该识别发生变化的部分，并更新对应模型。
+
+用户修改：
+
+- 文件
+- 类
+- 函数
+- 方法
+
+之后，系统应该更新受到影响的代码关系和相关模型。
+
+未发生变化的模型应该尽可能保持不变。
+
+---
+
+# 21. 项目模型持续演进
+
+Software Model 不是一次性生成的静态文档。
+
+随着项目代码和业务发生变化，模型应该持续更新。
+
+因此模型需要能够体现：
+
+- 当前状态
+- 历史变化
+- 模型变化
+- 代码变化
+
+用户最终应该能够理解：
+
+> “软件现在是什么样，以及它是如何变化到现在的。”
+
+---
+
+# 22. 项目首页
+
+项目首页主要用于进入软件模型。
+
+需要展示：
+
+- 项目名称
+- 项目基本信息
+- Business 概览
+- Workflow 概览
+- 模型状态
+- 代码分析状态
+- 最近模型变化
+
+首页的重点是帮助用户进入模型，而不是展示大量代码信息。
+
+---
+
+# 23. Model Canvas
+
+Model Canvas 是产品的核心页面。
+
+它负责：
+
+核心功能：
+
+- 无限画布
+- 节点
+- 节点连接
+- 节点展开
+- 节点收起
+- 缩放
+- 拖拽
+- 节点详情
+- 模型层级导航
+- 从模型跳转到代码
+
+---
+
+# 24. Node Detail
+
+点击节点后，需要能够查看节点详细信息。
+
+不同类型节点显示不同信息。
+
+至少包括：
+
+- 名称
+- 类型
+- 描述
+- 来源
+- 关系
+- 子节点
+- 父节点
+- 关联代码
+- AI 分析结果
+- 用户确认状态
+
+---
+
+# 25. Code 页面
+
+Code 页面用于：
+
+需要支持：
+
+- 项目文件结构
+- 文件查看
+- 代码查看
+- 代码定位
+- 模型与代码互相跳转
+
+---
+
+# 26. Graph 页面
+
+Graph 页面用于：
+
+重点是：
+
+- 当前节点
+- 上游
+- 下游
+- 依赖
+- 调用
+- 实现
+- 影响范围
+
+Graph 是辅助分析工具，不是产品核心操作方式。
+
+---
+
+# 27. 搜索
+
+用户需要能够搜索软件模型。
+
+搜索范围包括：
+
+- Business
+- Workflow
+- Workflow Step
+- Business Logic
+- Technical Implementation
+- 文件
+- 类
+- 函数
+- 方法
+
+搜索结果需要能够直接跳转到对应模型节点或代码位置。
+
+---
+
+# 28. 模型的一致性
+
+整个产品必须保证：
+
+例如一个 Function 被多个 Workflow 或 Business Logic 使用时：
+
+不能创建多个不同的 Function 节点。
+
+应该引用同一个 Code 节点。
+
+同理：
+
+同一个 Business Logic 被多个地方引用时，也应该保持统一身份。
+
+这样才能保证：
+
+- Graph 正确
+- 影响分析正确
+- 跳转正确
+- 模型不会逐渐分裂
+
+---
+
+# 29. 产品交互原则
+
+整个产品需要遵循以下原则：
+
+### 原则一：先理解，再深入
+
+默认先展示高层模型，不直接把用户淹没在代码中。
+
+### 原则二：逐层展开
+
+用户主动选择自己需要理解的部分。
+
+### 原则三：模型统一
+
+所有页面都基于同一个软件模型。
+
+### 原则四：代码是真实事实
+
+代码关系应该尽可能来自实际代码分析。
+
+### 原则五：AI 是辅助
+
+AI 提供理解和推测，但最终模型应该可以由用户控制。
+
+### 原则六：业务与代码保持关联
+
+任何高层业务对象，都应该能够逐步追踪到实际代码。
+
+### 原则七：代码变化能够反映到模型
+
+软件模型不能成为与真实代码脱节的静态文档。
+
+---
+
+# 30. MVP 必须实现的能力
+
+第一版本只需要完成核心闭环：
+
+### 项目
+
+能够打开一个真实代码项目。
+
+### 代码理解
+
+能够分析项目基本代码结构。
+
+### 软件模型
+
+能够建立：
+
+```text
+Business
+ ↓
+Workflow
+ ↓
+Workflow Step
+ ↓
+Business Logic
+ ↓
+Technical Implementation
+ ↓
+Code
+```
+
+### 统一模型
+
+所有节点属于同一个项目模型，并可以互相建立关系。
+
+### 无限画布
+
+能够在画布中浏览和展开模型。
+
+### 代码关联
+
+模型节点可以定位到实际代码。
+
+### Graph
+
+能够查看当前节点相关关系。
+
+### AI
+
+能够对高层语义和关系提供辅助建议。
+
+### 编辑
+
+用户能够修改和确认模型。
+
+### 增量更新
+
+代码变化后能够更新模型。
+
+### 影响分析
+
+能够从代码向上追踪可能受到影响的业务对象。
+
+---
+
+# 31. 明确不属于当前产品范围
+
+第一阶段不做：
+
+- 完整 IDE
+- 完整代码编辑器
+- CI/CD
+- Issue 管理
+- 项目管理
+- 团队协作
+- 权限系统
+- SaaS 平台
+- 完整 AI Agent
+- 自动生成整个项目代码
+- 自动替代开发者完成全部开发
+- 大规模企业项目管理
+- 复杂领域业务系统
+- 大量领域专用模板
+
+这些能力未来可以扩展，但不能影响当前核心产品。
+
+---
+
+# 32. 最终产品定义
+
+Software Model 的本质不是：
+
+> “把代码画成 Graph。”
+
+也不是：
+
+> “把代码转换成流程图。”
+
+而是：
+
+核心模型：
+
+```text
+                    Software Model
+
+Business
+   │
+   ▼
+Workflow
+   │
+   ▼
+Workflow Step
+   │
+   ▼
+Business Logic
+   │
+   ▼
+Technical Implementation
+   │
+   ▼
+Code
+```
+
+其中：
+
+**Canvas 是主要探索界面。**
+
+**Graph 是关系分析视图。**
+
+**Code 是事实来源。**
+
+**AI 是语义理解和辅助建模能力。**
+
+**整个项目始终只有一个统一的软件模型。**
+
+最终用户获得的不是一张代码关系图，而是一套能够回答：
+
+的软件模型。
