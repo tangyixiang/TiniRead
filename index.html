@@ -1021,13 +1021,17 @@
       }
 
       showSaveStatus('保存中...', 0);
-      const curTitle = document.getElementById('header-doc-title')?.textContent || '无标题文档';
-      const targetPath = currentDocPath || '未命名文档.md';
+      const curTitle = document.getElementById('header-doc-title')?.textContent?.trim() || '无标题文档';
+      const targetPath = currentDocPath || (curTitle && curTitle !== '新建文档' && curTitle !== '无标题文档' ? curTitle + '.md' : '未命名文档.md');
 
       try {
         await saveToBackend(targetPath, curTitle, markdownText);
+        if (!currentDocPath) {
+          currentDocPath = targetPath;
+        }
         lastSavedContent = markdownText;
         showSaveStatus('已保存');
+        loadWorkspace(false);
       } catch (err) {
         console.error('Save failed:', err);
         showSaveStatus('保存失败');
@@ -1035,9 +1039,12 @@
     }
 
     // Load and render raw Markdown text
-    function loadAndRenderMarkdown(rawText, filename) {
+    function loadAndRenderMarkdown(rawText, filename, docPath) {
       currentRawMarkdown = rawText;
       lastSavedContent = rawText;
+      if (docPath !== undefined) {
+        currentDocPath = docPath;
+      }
       let title = filename || '无标题文档';
       
       // Extract title from first H1 if available
@@ -1473,7 +1480,7 @@
     }
 
     // Workspace & Document Loading (Supports Tauri IPC & Web HTTP)
-    async function loadWorkspace() {
+    async function loadWorkspace(shouldSelectFirst = false) {
       try {
         let data = [];
         const invoker = getTauriInvoker();
@@ -1484,7 +1491,7 @@
           if (res.ok) data = await res.json();
         }
         renderWorkspace(data || []);
-        if (data && data.length > 0) {
+        if (shouldSelectFirst && data && data.length > 0 && !currentDocPath) {
           loadDocument(data[0].path);
         }
       } catch (e) {
@@ -1535,7 +1542,9 @@
 
     async function loadDocument(path) {
       if (currentDocPath && currentDocPath !== path) {
-        await saveDocument(true);
+        if (getCurrentMarkdown() !== lastSavedContent) {
+          await saveDocument(false);
+        }
       }
       currentDocPath = path;
       try {
@@ -1548,7 +1557,7 @@
           if (res.ok) doc = await res.json();
         }
         if (doc) {
-          loadAndRenderMarkdown(doc.content || '', doc.title || path);
+          loadAndRenderMarkdown(doc.content || '', doc.title || path, path);
         }
       } catch (e) {
         console.error(e);
@@ -1573,11 +1582,11 @@
 
     // New Doc Button
     document.getElementById('add-doc-btn').addEventListener('click', async () => {
-      if (currentDocPath) {
-        await saveDocument(true);
+      if (currentDocPath && getCurrentMarkdown() !== lastSavedContent) {
+        await saveDocument(false);
       }
       currentDocPath = '';
-      loadAndRenderMarkdown('# 新建文档\n\n点击开始编写内容...', '新建文档');
+      loadAndRenderMarkdown('# 新建文档\n\n点击开始编写内容...', '新建文档', '');
       editorContent.focus();
     });
 
@@ -1585,12 +1594,17 @@
     const openBtn = document.getElementById('open-file-btn');
     const fileInput = document.getElementById('local-file-input');
     openBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => {
+    fileInput.addEventListener('change', async (e) => {
       if (e.target.files.length > 0) {
         const file = e.target.files[0];
+        if (currentDocPath && getCurrentMarkdown() !== lastSavedContent) {
+          await saveDocument(false);
+        }
+        const filePath = file.path || file.name;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          loadAndRenderMarkdown(ev.target.result, file.name);
+          const content = ev.target.result;
+          loadAndRenderMarkdown(content, file.name, filePath);
         };
         reader.readAsText(file);
         fileInput.value = '';
@@ -1615,16 +1629,21 @@
       }
     });
     window.addEventListener('dragover', (e) => e.preventDefault());
-    window.addEventListener('drop', (e) => {
+    window.addEventListener('drop', async (e) => {
       e.preventDefault();
       dragCounter = 0;
       mask.classList.add('hidden');
       mask.classList.remove('flex');
       if (e.dataTransfer.files.length > 0) {
         const file = e.dataTransfer.files[0];
+        if (currentDocPath && getCurrentMarkdown() !== lastSavedContent) {
+          await saveDocument(false);
+        }
+        const filePath = file.path || file.name;
         const reader = new FileReader();
         reader.onload = (ev) => {
-          loadAndRenderMarkdown(ev.target.result, file.name);
+          const content = ev.target.result;
+          loadAndRenderMarkdown(content, file.name, filePath);
         };
         reader.readAsText(file);
       }
@@ -1686,8 +1705,8 @@ pub struct Document {
 \`\`\``;
 
     // Initialize with sample and load workspace
-    loadAndRenderMarkdown(sampleMarkdown, 'MarkView 架构设计规范');
-    loadWorkspace();
+    loadAndRenderMarkdown(sampleMarkdown, 'MarkView 架构设计规范', '');
+    loadWorkspace(false);
   </script>
 </body>
 </html>

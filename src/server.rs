@@ -73,8 +73,22 @@ impl AppServer {
                 // Read Document
                 (&Method::Get, "/api/read") => {
                     let doc_path = extract_query_param(query_part, "path");
-                    let target_path = if doc_path.is_empty() {
-                        self.workspace_root.join("README.md")
+                    if doc_path.is_empty() {
+                        let res: ApiResponse<()> = ApiResponse::err("Missing path parameter".to_string());
+                        let body = serde_json::to_string(&res).unwrap_or_default();
+                        let response = Response::new(
+                            400.into(),
+                            headers,
+                            Cursor::new(body.into_bytes()),
+                            None,
+                            None,
+                        );
+                        let _ = request.respond(response);
+                        continue;
+                    }
+
+                    let target_path = if !PathBuf::from(&doc_path).is_absolute() {
+                        self.workspace_root.join(&doc_path)
                     } else {
                         PathBuf::from(doc_path)
                     };
@@ -112,10 +126,19 @@ impl AppServer {
                     let _ = request.as_reader().read_to_string(&mut content_str);
 
                     let res = match serde_json::from_str::<SaveRequest>(&content_str) {
-                        Ok(req) => match save_document(&req.path, &req.html_content) {
-                            Ok(_) => ApiResponse::ok("Document saved"),
-                            Err(e) => ApiResponse::err(format!("Save error: {}", e)),
-                        },
+                        Ok(req) => {
+                            let target_path = if req.path.is_empty() || req.path == "未命名文档.md" {
+                                self.workspace_root.join("未命名文档.md")
+                            } else if !PathBuf::from(&req.path).is_absolute() {
+                                self.workspace_root.join(&req.path)
+                            } else {
+                                PathBuf::from(&req.path)
+                            };
+                            match save_document(target_path.to_string_lossy().as_ref(), &req.html_content) {
+                                Ok(_) => ApiResponse::ok("Document saved"),
+                                Err(e) => ApiResponse::err(format!("Save error: {}", e)),
+                            }
+                        }
                         Err(e) => ApiResponse::err(format!("Parse error: {}", e)),
                     };
 
