@@ -6,7 +6,7 @@ use tiny_http::{Header, Method, Response, Server};
 use crate::fs_ops::{read_document, save_document, scan_workspace};
 use crate::models::{ApiResponse, SaveRequest};
 
-const HTML_APP: &str = include_str!("../web/index.html");
+
 
 pub struct AppServer {
     workspace_root: PathBuf,
@@ -42,18 +42,55 @@ impl AppServer {
                 Header::from_bytes(&b"Access-Control-Allow-Headers"[..], &b"Content-Type"[..]).unwrap(),
             ];
 
-            match (&method, path_part) {
-                // Static Embedded App HTML
-                (&Method::Get, "/") | (&Method::Get, "/index.html") => {
-                    let html_header = Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap();
+            if method == Method::Get && path_part.starts_with("/assets/") {
+                let clean_path = path_part.trim_start_matches('/');
+                let asset_path = PathBuf::from("dist").join(clean_path);
+                if let Ok(bytes) = std::fs::read(&asset_path) {
+                    let mime = if path_part.ends_with(".js") {
+                        "application/javascript; charset=utf-8"
+                    } else if path_part.ends_with(".css") {
+                        "text/css; charset=utf-8"
+                    } else if path_part.ends_with(".woff2") {
+                        "font/woff2"
+                    } else if path_part.ends_with(".svg") {
+                        "image/svg+xml"
+                    } else if path_part.ends_with(".png") {
+                        "image/png"
+                    } else {
+                        "application/octet-stream"
+                    };
+                    let mime_header = Header::from_bytes(&b"Content-Type"[..], mime.as_bytes()).unwrap();
+                    let len = bytes.len();
                     let response = Response::new(
                         200.into(),
-                        vec![html_header],
-                        Cursor::new(HTML_APP.as_bytes()),
-                        Some(HTML_APP.len()),
+                        vec![mime_header],
+                        Cursor::new(bytes),
+                        Some(len),
                         None,
                     );
                     let _ = request.respond(response);
+                    continue;
+                }
+            }
+
+            match (&method, path_part) {
+                // Static Embedded App HTML
+                (&Method::Get, "/") | (&Method::Get, "/index.html") => {
+                    let dist_index = PathBuf::from("dist/index.html");
+                    if let Ok(content_bytes) = std::fs::read(&dist_index) {
+                        let html_header = Header::from_bytes(&b"Content-Type"[..], &b"text/html; charset=utf-8"[..]).unwrap();
+                        let len = content_bytes.len();
+                        let response = Response::new(
+                            200.into(),
+                            vec![html_header],
+                            Cursor::new(content_bytes),
+                            Some(len),
+                            None,
+                        );
+                        let _ = request.respond(response);
+                    } else {
+                        let _ = request.respond(Response::from_string("Not Found").with_status_code(404));
+                    }
                 }
 
                 // Workspace File List

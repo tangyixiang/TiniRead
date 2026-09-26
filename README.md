@@ -17,21 +17,21 @@ MarkView 是一个基于 Rust 与现代化前端技术构建的本地 Markdown �
 
 - **后端**：Rust (tiny_http, pulldown-cmark, serde, serde_json, open)
 - **桌面端**：Tauri 2.0
-- **前端**：HTML5, Tailwind CSS, 原生 JavaScript（零重型框架依赖，启动迅速）
+- **前端**：React 19, TypeScript, Tailwind CSS v4, 本地打包 WOFF2 字体
 - **构建工具**：Vite, Cargo
 
 ## 目录结构
 
 ```text
-code-view/
-├── src/                # Rust Web 模式后端源码 (HTTP 服务、文档解析、文件系统操作)
+markdown-view/
+├── src/                # 前端工程源码 (React 19 + TypeScript + Tailwind v4)
 ├── src-tauri/          # Tauri 2.0 桌面端工程 (IPC 绑定、窗口配置、原生打包)
-├── web/                # 嵌入式 Web 前端资源
-├── index.html          # 前端主页面与编辑器核心实现
-├── prototype.html      # 1:1 高保真独立原型
-├── vite.config.js      # Vite 配置
-├── Cargo.toml          # Rust 根项目配置
-└── package.json        # Node.js 依赖与脚本配置
+├── src-server/         # 独立轻量 Rust Web 服务端源码
+├── dist/               # 前端本地静态构建产物
+├── index.html          # 前端 HTML 容器
+├── vite.config.ts      # Vite 构建配置
+├── Cargo.toml          # Rust 服务端配置
+└── package.json        # 前端依赖与脚本配置
 ```
 
 ## 快速上手
