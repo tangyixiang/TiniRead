@@ -16,9 +16,17 @@
   --highlight-yellow: #fef08a;
   --highlight-green: #bbf7d0;
   --highlight-blue: #bfdbfe;
+  --highlight-pink: #fbcfe8;
+  --highlight-purple: #e9d5ff;
   --callout-bg: #f9f9fb;
   --callout-border: #e4e4e7;
   --bg-card-glass: rgba(255, 255, 255, 0.72);
+  --code-text: #1d4ed8;
+  --code-bg: rgba(37, 99, 235, 0.08);
+  --code-border: rgba(37, 99, 235, 0.16);
+  --link-text: #2563eb;
+  --link-hover: #1d4ed8;
+  --link-decoration: rgba(37, 99, 235, 0.35);
 }
 
 html.theme-warm {
@@ -36,9 +44,17 @@ html.theme-warm {
   --highlight-yellow: #fde68a;
   --highlight-green: #cbd5e1;
   --highlight-blue: #e2e8f0;
+  --highlight-pink: #fce7f3;
+  --highlight-purple: #f3e8ff;
   --callout-bg: #f5eee1;
   --callout-border: #e6dac6;
   --bg-card-glass: rgba(255, 253, 249, 0.75);
+  --code-text: #1e40af;
+  --code-bg: rgba(30, 64, 175, 0.07);
+  --code-border: rgba(30, 64, 175, 0.15);
+  --link-text: #1d4ed8;
+  --link-hover: #1e3a8a;
+  --link-decoration: rgba(29, 78, 216, 0.35);
 }
 
 html.theme-dark {
@@ -56,9 +72,17 @@ html.theme-dark {
   --highlight-yellow: #713f12;
   --highlight-green: #14532d;
   --highlight-blue: #1e3a8a;
+  --highlight-pink: #831843;
+  --highlight-purple: #581c87;
   --callout-bg: #222227;
   --callout-border: #333338;
   --bg-card-glass: rgba(26, 26, 30, 0.75);
+  --code-text: #93c5fd;
+  --code-bg: rgba(59, 130, 246, 0.15);
+  --code-border: rgba(59, 130, 246, 0.25);
+  --link-text: #60a5fa;
+  --link-hover: #93c5fd;
+  --link-decoration: rgba(96, 165, 250, 0.35);
 }
 
 /* 高保真磨砂毛玻璃样式 */
@@ -125,6 +149,14 @@ body.platform-win #header-left-group {
   padding-left: 0;
 }
 
+/* Tauri 窗口拖拽区域 */
+[data-tauri-drag-region] {
+  user-select: none;
+}
+[data-tauri-no-drag] {
+  user-select: auto;
+}
+
 #dynamic-toc {
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
@@ -160,6 +192,24 @@ mark.hl-green {
   padding: 2px 5px;
   border-radius: 4px;
 }
+mark.hl-blue {
+  background-color: var(--highlight-blue);
+  color: inherit;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+mark.hl-pink {
+  background-color: var(--highlight-pink);
+  color: inherit;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
+mark.hl-purple {
+  background-color: var(--highlight-purple);
+  color: inherit;
+  padding: 2px 5px;
+  border-radius: 4px;
+}
 
 .prose h1, .prose h2, .prose h3 {
   scroll-margin-top: 48px;
@@ -170,4 +220,35 @@ mark.hl-green {
   color: var(--text-light);
   pointer-events: none;
   display: block;
+}
+
+/* 行内代码样式与独立标签 */
+.inline-code,
+code:not(pre code) {
+  font-family: 'JetBrains Mono', "Cascadia Code", Consolas, Menlo, monospace;
+  font-size: 0.85em;
+  background-color: var(--code-bg);
+  color: var(--code-text);
+  border: 1px solid var(--code-border);
+  padding: 0.15em 0.4em;
+  border-radius: 5px;
+  word-break: break-word;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+/* 链接样式 */
+.editor-body a,
+.prose a {
+  color: var(--link-text);
+  text-decoration: underline;
+  text-decoration-color: var(--link-decoration);
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.editor-body a:hover,
+.prose a:hover {
+  color: var(--link-hover);
+  text-decoration-color: var(--link-hover);
 }

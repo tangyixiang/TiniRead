@@ -6,6 +6,7 @@ import { ContextMenu, InsertType } from './ContextMenu';
 import { parseMarkdownToHtml, domToMarkdown } from '../utils/markdown';
 
 interface EditorProps {
+  currentDocPath?: string;
   markdown: string;
   onChange: (newMd: string) => void;
   renderMode: RenderMode;
@@ -13,16 +14,29 @@ interface EditorProps {
   saveStatus: string;
   contextMenuTrigger?: { x: number; y: number } | null;
   onContextMenuTriggerHandled?: () => void;
+  onAddHighlight?: (selectedText: string, colorClass: string) => void;
+  onRemoveHighlight?: (selectedText: string) => void;
+  initialScrollProgress?: number;
+  onScrollProgressChange?: (progress: number) => void;
+  targetHighlightText?: string | null;
+  onHighlightLocated?: () => void;
 }
 
 export const Editor: React.FC<EditorProps> = ({
+  currentDocPath,
   markdown,
   onChange,
   renderMode,
   onSave,
   saveStatus,
   contextMenuTrigger,
-  onContextMenuTriggerHandled
+  onContextMenuTriggerHandled,
+  onAddHighlight,
+  onRemoveHighlight,
+  initialScrollProgress,
+  onScrollProgressChange,
+  targetHighlightText,
+  onHighlightLocated
 }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const sourceRef = useRef<HTMLTextAreaElement>(null);
@@ -35,7 +49,8 @@ export const Editor: React.FC<EditorProps> = ({
   const [selectionPos, setSelectionPos] = useState<{ top: number; left: number } | null>(null);
   const [contextMenuPos, setContextMenuPos] = useState<{ x: number; y: number } | null>(null);
 
-  const isInternalChange = useRef(false);
+  const lastRenderedMarkdownRef = useRef<string | null>(null);
+  const prevRenderModeRef = useRef<RenderMode>(renderMode);
 
   // Update outline and word count
   const updateOutlineAndStats = useCallback(() => {
@@ -83,13 +98,34 @@ export const Editor: React.FC<EditorProps> = ({
   // Sync markdown into contenteditable DOM when markdown changes externally
   useEffect(() => {
     if (renderMode === 'rendered' && contentRef.current) {
-      if (!isInternalChange.current) {
+      const modeJustChanged = prevRenderModeRef.current !== 'rendered';
+      if (markdown !== lastRenderedMarkdownRef.current || modeJustChanged) {
         contentRef.current.innerHTML = parseMarkdownToHtml(markdown);
+        lastRenderedMarkdownRef.current = markdown;
       }
-      isInternalChange.current = false;
     }
+    prevRenderModeRef.current = renderMode;
     updateOutlineAndStats();
   }, [markdown, renderMode, updateOutlineAndStats]);
+
+  // Scroll to and visually focus highlight when clicked in sidebar
+  useEffect(() => {
+    if (!targetHighlightText || !contentRef.current || renderMode !== 'rendered') return;
+    const marks = Array.from(contentRef.current.querySelectorAll('mark'));
+    const matched = marks.find((m) => {
+      const txt = (m.textContent || '').trim();
+      const target = targetHighlightText.trim();
+      return txt === target || txt.includes(target) || target.includes(txt);
+    });
+    if (matched) {
+      matched.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      matched.classList.add('ring-2', 'ring-offset-2', 'ring-blue-500');
+      setTimeout(() => {
+        matched.classList.remove('ring-2', 'ring-offset-2', 'ring-blue-500');
+      }, 1800);
+    }
+    onHighlightLocated?.();
+  }, [targetHighlightText, renderMode, onHighlightLocated]);
 
   // Handle external insert block trigger from Header
   useEffect(() => {
@@ -99,6 +135,23 @@ export const Editor: React.FC<EditorProps> = ({
     }
   }, [contextMenuTrigger, onContextMenuTriggerHandled]);
 
+  const scrollTimeoutRef = useRef<any>(null);
+
+  // Restore scroll position when document or initialScrollProgress changes
+  useEffect(() => {
+    if (initialScrollProgress && initialScrollProgress > 0 && scrollAreaRef.current) {
+      const timer = setTimeout(() => {
+        if (!scrollAreaRef.current) return;
+        const { scrollHeight, clientHeight } = scrollAreaRef.current;
+        const maxScroll = scrollHeight - clientHeight;
+        if (maxScroll > 0) {
+          scrollAreaRef.current.scrollTop = initialScrollProgress * maxScroll;
+        }
+      }, 120);
+      return () => clearTimeout(timer);
+    }
+  }, [initialScrollProgress]);
+
   // Scroll progress tracker
   const handleScroll = () => {
     if (!scrollAreaRef.current) return;
@@ -106,6 +159,13 @@ export const Editor: React.FC<EditorProps> = ({
     const maxScroll = scrollHeight - clientHeight;
     const pct = maxScroll > 0 ? Math.min(100, Math.round((scrollTop / maxScroll) * 100)) : 0;
     setReadProgress(pct);
+
+    if (onScrollProgressChange && maxScroll > 0) {
+      if (scrollTimeoutRef.current) clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = setTimeout(() => {
+        onScrollProgressChange(scrollTop / maxScroll);
+      }, 400);
+    }
   };
 
   // Scroll to heading on outline click
@@ -120,8 +180,8 @@ export const Editor: React.FC<EditorProps> = ({
   // Contenteditable input handling
   const handleContentInput = () => {
     if (!contentRef.current) return;
-    isInternalChange.current = true;
     const newMd = domToMarkdown(contentRef.current);
+    lastRenderedMarkdownRef.current = newMd;
     onChange(newMd);
   };
 
@@ -156,6 +216,24 @@ export const Editor: React.FC<EditorProps> = ({
           target.innerText = originText;
         }, 1500);
       });
+      return;
+    }
+
+    // Mark element clicked: select mark text and display floating toolbar
+    const markEl = target.closest('mark');
+    if (markEl && contentRef.current && contentRef.current.contains(markEl)) {
+      const sel = window.getSelection();
+      if (sel) {
+        const range = document.createRange();
+        range.selectNodeContents(markEl);
+        sel.removeAllRanges();
+        sel.addRange(range);
+        const rect = markEl.getBoundingClientRect();
+        setSelectionPos({
+          top: rect.top - 8,
+          left: rect.left + rect.width / 2
+        });
+      }
       return;
     }
   };
@@ -198,14 +276,83 @@ export const Editor: React.FC<EditorProps> = ({
     const sel = window.getSelection();
     if (!sel || sel.isCollapsed || !sel.rangeCount) return;
     const range = sel.getRangeAt(0);
+    const selectedText = range.toString().trim();
+    if (!selectedText) return;
+
     const mark = document.createElement('mark');
     mark.className = colorClass;
-    mark.textContent = range.toString();
+    mark.textContent = selectedText;
     range.deleteContents();
     range.insertNode(mark);
     sel.removeAllRanges();
     setSelectionPos(null);
     handleContentInput();
+
+    onAddHighlight?.(selectedText, colorClass);
+  };
+
+  const handleRemoveHighlight = () => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+
+    const marksToRemove: HTMLElement[] = [];
+
+    // Check if common ancestor or its parents are a mark
+    let node: Node | null = range.commonAncestorContainer;
+    while (node && node !== contentRef.current) {
+      if (node.nodeType === Node.ELEMENT_NODE && (node as HTMLElement).tagName.toLowerCase() === 'mark') {
+        marksToRemove.push(node as HTMLElement);
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    // Check start and end containers
+    let startNode: Node | null = range.startContainer;
+    while (startNode && startNode !== contentRef.current) {
+      if (startNode.nodeType === Node.ELEMENT_NODE && (startNode as HTMLElement).tagName.toLowerCase() === 'mark') {
+        if (!marksToRemove.includes(startNode as HTMLElement)) {
+          marksToRemove.push(startNode as HTMLElement);
+        }
+        break;
+      }
+      startNode = startNode.parentNode;
+    }
+
+    // Check all marks intersected by the selection
+    if (contentRef.current) {
+      const allMarks = Array.from(contentRef.current.querySelectorAll('mark'));
+      for (const m of allMarks) {
+        if (sel.containsNode(m, true) && !marksToRemove.includes(m)) {
+          marksToRemove.push(m);
+        }
+      }
+    }
+
+    if (marksToRemove.length > 0) {
+      const removedTexts: string[] = [];
+      marksToRemove.forEach((mark) => {
+        const text = (mark.textContent || '').trim();
+        if (text) removedTexts.push(text);
+        const parent = mark.parentNode;
+        if (parent) {
+          while (mark.firstChild) {
+            parent.insertBefore(mark.firstChild, mark);
+          }
+          parent.removeChild(mark);
+        }
+      });
+      sel.removeAllRanges();
+      setSelectionPos(null);
+      handleContentInput();
+
+      removedTexts.forEach((txt) => {
+        onRemoveHighlight?.(txt);
+      });
+    } else {
+      setSelectionPos(null);
+    }
   };
 
   const handleHeadingTransform = (level: number) => {
@@ -233,7 +380,7 @@ export const Editor: React.FC<EditorProps> = ({
     if (!sel || sel.isCollapsed || !sel.rangeCount) return;
     const range = sel.getRangeAt(0);
     const code = document.createElement('code');
-    code.className = 'font-mono text-xs bg-[var(--bg-window)] px-1.5 py-0.5 rounded text-purple-600';
+    code.className = 'inline-code';
     code.textContent = range.toString();
     range.deleteContents();
     range.insertNode(code);
@@ -339,6 +486,7 @@ export const Editor: React.FC<EditorProps> = ({
           items={outlineItems}
           progress={readProgress}
           onItemClick={handleOutlineClick}
+          docPath={currentDocPath}
         />
 
         {/* Document Body */}
@@ -392,6 +540,7 @@ export const Editor: React.FC<EditorProps> = ({
         position={selectionPos}
         onFormat={handleFormat}
         onHighlight={handleHighlight}
+        onClearHighlight={handleRemoveHighlight}
         onHeading={handleHeadingTransform}
         onInlineCode={handleInlineCode}
       />

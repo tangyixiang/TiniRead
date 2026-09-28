@@ -7,8 +7,14 @@ export function escapeHtml(str: string): string {
 
 export function inlineFormat(text: string): string {
   let s = escapeHtml(text);
-  // Highlights: ==text==
-  s = s.replace(/==([^=]+)==/g, '<mark class="hl-yellow">$1</mark>');
+  // Unescape safe <mark> tags if present
+  s = s.replace(/&lt;mark class="(hl-[a-z0-9_-]+)"&gt;([\s\S]*?)&lt;\/mark&gt;/gi, '<mark class="$1">$2</mark>');
+  // Colored highlights: ==green:text==, ==hl-green:text==, etc.
+  s = s.replace(/==(hl-)?(yellow|green|blue|pink|purple):([^=\r\n]+)==/gi, (_match, _pfx, color, content) => {
+    return `<mark class="hl-${color.toLowerCase()}">${content}</mark>`;
+  });
+  // Default highlights: ==text==
+  s = s.replace(/==([^=\r\n]+)==/g, '<mark class="hl-yellow">$1</mark>');
   // Bold + Italic: ***text***
   s = s.replace(/\*\*\*([^*]+)\*\*\*/g, '<strong class="font-semibold text-[var(--text-main)]"><em class="italic">$1</em></strong>');
   // Bold: **text** or __text__
@@ -20,11 +26,11 @@ export function inlineFormat(text: string): string {
   // Strikethrough: ~~text~~
   s = s.replace(/~~([^~]+)~~/g, '<del class="line-through text-[var(--text-light)]">$1</del>');
   // Inline code: `code`
-  s = s.replace(/`([^`]+)`/g, '<code class="font-mono text-xs bg-[var(--bg-window)] px-1.5 py-0.5 rounded text-purple-600">$1</code>');
+  s = s.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
   // Images: ![alt](url)
   s = s.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="rounded-xl border border-[var(--border-subtle)] my-3 max-w-full shadow-sm">');
   // Links: [text](url)
-  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="text-[var(--text-main)] underline decoration-[var(--border-strong)] hover:text-blue-600 transition">$1</a>');
+  s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer" class="text-[var(--link-text)] underline decoration-[var(--link-decoration)] hover:text-[var(--link-hover)] transition cursor-pointer font-medium">$1</a>');
   return s;
 }
 
@@ -322,7 +328,14 @@ export function inlineNodeToMarkdown(node: Node | null): string {
   }
   if (tag === 'mark') {
     const text = childrenMd.trim();
-    return text ? `==${text}==` : '';
+    if (!text) return '';
+    const cls = el.className || '';
+    const match = cls.match(/hl-(yellow|green|blue|pink|purple)/i);
+    const color = match ? match[1].toLowerCase() : 'yellow';
+    if (color === 'yellow') {
+      return `==${text}==`;
+    }
+    return `==${color}:${text}==`;
   }
   if (tag === 'code' && el.parentElement?.tagName.toLowerCase() !== 'pre') {
     return `\`${el.textContent}\``;

@@ -12,7 +12,7 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     watch: {
-      ignored: ['**/src-tauri/**', '**/src-server/**', '**/target/**'],
+      ignored: ['**/src-tauri/**', '**/src-server/**', '**/target/**', '**/*.md', '**/*.markdown', '**/*.db*', '**/*.sqlite*'],
     },
   },
   envPrefix: ['VITE_', 'TAURI_'],

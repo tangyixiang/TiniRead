@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+import { invoke } from '@tauri-apps/api/core';
 import { ViewMode, RenderMode, ThemeMode } from '../types';
 
 interface HeaderProps {
@@ -7,6 +9,7 @@ interface HeaderProps {
   renderMode: RenderMode;
   onRenderModeChange: (mode: RenderMode) => void;
   docTitle: string;
+  isDirty?: boolean;
   theme: ThemeMode;
   onThemeChange: (theme: ThemeMode) => void;
   onInsertClick: (e: React.MouseEvent) => void;
@@ -19,6 +22,7 @@ export const Header: React.FC<HeaderProps> = ({
   renderMode,
   onRenderModeChange,
   docTitle,
+  isDirty = false,
   theme,
   onThemeChange,
   onInsertClick,
@@ -26,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -37,9 +42,57 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Window drag and double click to maximize
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+
+    const handleMouseDown = async (e: MouseEvent) => {
+      // 仅响应鼠标左键
+      if (e.button !== 0) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // 排除可交互元素
+      if (target.closest('button, a, input, select, textarea, [data-tauri-drag-region="false"], [data-tauri-no-drag]')) {
+        return;
+      }
+
+      if (e.detail === 2) {
+        try {
+          const appWindow = getCurrentWindow();
+          await appWindow.toggleMaximize();
+        } catch {
+          try {
+            await invoke('toggle_maximize_window');
+          } catch {}
+        }
+        return;
+      }
+
+      try {
+        const appWindow = getCurrentWindow();
+        await appWindow.startDragging();
+      } catch {
+        try {
+          await invoke('drag_window');
+        } catch {}
+      }
+    };
+
+    el.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      el.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, []);
+
   return (
-    <header data-tauri-drag-region className="h-11 border-b border-[var(--border-subtle)] px-4 flex items-center justify-between shrink-0 bg-[var(--bg-card)] select-none">
-      <div id="header-left-group" className="flex items-center gap-2">
+    <header
+      ref={headerRef}
+      data-tauri-drag-region="deep"
+      className="h-11 border-b border-[var(--border-subtle)] px-4 flex items-center justify-between shrink-0 bg-[var(--bg-card)] select-none cursor-default"
+    >
+      <div id="header-left-group" data-tauri-no-drag data-tauri-drag-region="false" className="flex items-center gap-2">
         {/* View mode switcher */}
         <div className="flex items-center bg-[var(--bg-window)] p-0.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
           <button
@@ -127,12 +180,18 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Center Status / Document Title */}
-      <div className="flex items-center text-xs text-[var(--text-main)] font-semibold truncate max-w-[360px]">
-        <span>{docTitle || 'TiniRead 本地编辑与阅读'}</span>
+      <div className="flex items-center gap-1.5 text-xs text-[var(--text-main)] font-semibold truncate max-w-[360px] pointer-events-none">
+        <span className="truncate">{docTitle || '未命名文档.md'}</span>
+        {isDirty && (
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"
+            title="未保存更改"
+          />
+        )}
       </div>
 
       {/* Right Action Tools */}
-      <div className="flex items-center gap-2">
+      <div data-tauri-no-drag data-tauri-drag-region="false" className="flex items-center gap-2">
         <button
           onClick={onInsertClick}
           className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-[var(--text-main)] bg-[var(--bg-window)] border border-[var(--border-subtle)] rounded-lg hover:border-[var(--text-light)] transition"
