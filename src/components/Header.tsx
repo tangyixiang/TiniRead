@@ -38,7 +38,7 @@ export const Header: React.FC<HeaderProps> = ({
   }, []);
 
   return (
-    <header className="h-11 border-b border-[var(--border-subtle)] px-4 flex items-center justify-between shrink-0 bg-[var(--bg-card)]">
+    <header data-tauri-drag-region className="h-11 border-b border-[var(--border-subtle)] px-4 flex items-center justify-between shrink-0 bg-[var(--bg-card)] select-none">
       <div id="header-left-group" className="flex items-center gap-2">
         {/* View mode switcher */}
         <div className="flex items-center bg-[var(--bg-window)] p-0.5 rounded-lg border border-[var(--border-subtle)] text-xs text-[var(--text-muted)]">
@@ -128,7 +128,7 @@ export const Header: React.FC<HeaderProps> = ({
 
       {/* Center Status / Document Title */}
       <div className="flex items-center text-xs text-[var(--text-main)] font-semibold truncate max-w-[360px]">
-        <span>{docTitle || 'MarkView 本地编辑与阅读'}</span>
+        <span>{docTitle || 'TiniRead 本地编辑与阅读'}</span>
       </div>
 
       {/* Right Action Tools */}
@@ -148,14 +148,14 @@ export const Header: React.FC<HeaderProps> = ({
         <button
           onClick={onImportClick}
           className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-[var(--text-main)] bg-[var(--bg-window)] border border-[var(--border-subtle)] rounded-lg hover:border-[var(--text-light)] transition"
-          title="导入"
+          title="打开"
         >
           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
             <polyline points="17 8 12 3 7 8" />
             <line x1="12" y1="3" x2="12" y2="15" />
           </svg>
-          <span>导入</span>
+          <span>打开</span>
         </button>
 
         {/* Theme Switcher */}

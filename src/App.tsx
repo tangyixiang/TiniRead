@@ -226,7 +226,7 @@ export const App: React.FC = () => {
 
   const currentDocName = currentDocPath
     ? (currentDocPath.split(/[\\/]/).pop() || currentDocPath)
-    : 'MarkView 本地编辑与阅读';
+    : 'TiniRead 本地编辑与阅读';
 
   return (
     <div className="h-screen w-screen flex flex-col antialiased overflow-hidden select-none">

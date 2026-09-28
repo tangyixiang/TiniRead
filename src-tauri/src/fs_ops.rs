@@ -12,6 +12,26 @@ pub fn scan_workspace(root: &Path) -> Vec<WorkspaceFile> {
     files
 }
 
+fn is_ignored_dir(name: &str) -> bool {
+    if name.starts_with('.') {
+        return true;
+    }
+    matches!(
+        name,
+        "target"
+            | "node_modules"
+            | "dist"
+            | "build"
+            | "Library"
+            | "Music"
+            | "Pictures"
+            | "Movies"
+            | "Applications"
+            | "System"
+            | ".Trash"
+    )
+}
+
 fn scan_dir_recursive(dir: &Path, files: &mut Vec<WorkspaceFile>, depth: usize, max_depth: usize) {
     if depth > max_depth {
         return;
@@ -22,7 +42,7 @@ fn scan_dir_recursive(dir: &Path, files: &mut Vec<WorkspaceFile>, depth: usize, 
             let path = entry.path();
             if path.is_dir() {
                 let dir_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-                if !dir_name.starts_with('.') && dir_name != "target" && dir_name != "node_modules" {
+                if !is_ignored_dir(dir_name) {
                     scan_dir_recursive(&path, files, depth + 1, max_depth);
                 }
             } else if path.is_file() {
@@ -121,8 +141,7 @@ fn extract_snippet(content: &str) -> String {
     for line in content.lines() {
         let trimmed = line.trim();
         if !trimmed.is_empty() && !trimmed.starts_with('#') {
-            let max_len = 100.min(trimmed.len());
-            return trimmed[..max_len].to_string();
+            return trimmed.chars().take(100).collect();
         }
     }
     "暂无正文描述".to_string()

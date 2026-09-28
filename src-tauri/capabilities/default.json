@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capability for MarkView",
+  "description": "Default capability for TiniRead",
   "windows": ["*"],
   "permissions": [
     "core:default"

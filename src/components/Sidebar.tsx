@@ -1,5 +1,6 @@
 import React from 'react';
 import { WorkspaceFile } from '../types';
+import appIcon from '../assets/app-icon.png';
 
 interface SidebarProps {
   documents: WorkspaceFile[];
@@ -16,11 +17,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="w-52 bg-[var(--bg-sidebar)] border-r border-[var(--border-subtle)] flex flex-col justify-between shrink-0 transition-all duration-200">
       <div className="p-3 space-y-4">
         {/* Brand */}
-        <div className="flex items-center gap-2.5 px-2 py-1">
-          <div className="w-6 h-6 rounded-lg bg-[var(--text-main)] text-[var(--bg-card)] flex items-center justify-center font-bold text-xs">
-            M
+        <div className="flex items-center gap-2.5 px-2 py-1 select-none">
+          <img src={appIcon} alt="TiniRead" className="w-7 h-7 rounded-md object-contain shadow-xs" />
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center text-sm tracking-tight text-[var(--text-main)] leading-tight">
+              <span className="font-bold">TiniRead</span>
+            </div>
           </div>
-          <span className="font-bold text-sm tracking-tight text-[var(--text-main)]">MarkView</span>
         </div>
 
         {/* Workspace Nav Header */}

@@ -25,7 +25,7 @@ impl AppServer {
     }
 
     pub fn run(&self) {
-        println!("MarkView backend listening on http://{}", self.server.server_addr());
+        println!("TiniRead backend listening on http://{}", self.server.server_addr());
 
         for mut request in self.server.incoming_requests() {
             let url = request.url().to_string();

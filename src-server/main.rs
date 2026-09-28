@@ -37,7 +37,7 @@ fn main() {
     let host = "127.0.0.1";
     let default_port = 13579;
 
-    // Check if an existing MarkView instance is already active
+    // Check if an existing TiniRead instance is already active
     if let Ok(mut stream) = TcpStream::connect(format!("{}:{}", host, default_port)) {
         let _ = stream.write_all(b"HEAD / HTTP/1.0\r\nHost: 127.0.0.1\r\n\r\n");
         // An instance is already serving, open it in browser and exit
@@ -87,8 +87,8 @@ fn main() {
 
 fn launch_desktop_window(url: &str) {
     let profile_dir = env::var("LOCALAPPDATA")
-        .map(|p| format!("{}\\MarkView\\profile", p))
-        .unwrap_or_else(|_| "C:\\temp\\markview_profile".to_string());
+        .map(|p| format!("{}\\TiniRead\\profile", p))
+        .unwrap_or_else(|_| "C:\\temp\\tiniread_profile".to_string());
 
     let browser_paths = [
         "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",

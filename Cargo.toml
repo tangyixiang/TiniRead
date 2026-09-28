@@ -1,10 +1,10 @@
 [package]
-name = "markview"
+name = "tiniread"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "markview"
+name = "tiniread"
 path = "src-server/main.rs"
 
 [dependencies]

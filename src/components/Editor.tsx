@@ -368,7 +368,7 @@ export const Editor: React.FC<EditorProps> = ({
           )}
 
           <div className="pt-8 pb-10 text-center text-xs text-[var(--text-light)] font-mono select-none">
-            — 尽览于此 · MarkView —
+            — TiniRead · Read simply —
           </div>
         </div>
       </div>

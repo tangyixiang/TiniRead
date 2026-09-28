@@ -1,33 +1,24 @@
+import { invoke } from '@tauri-apps/api/core';
 import { WorkspaceFile, DocumentData } from '../types';
 
-declare global {
-  interface Window {
-    __TAURI__?: {
-      core?: {
-        invoke: <T = any>(cmd: string, args?: Record<string, any>) => Promise<T>;
-      };
-      invoke?: <T = any>(cmd: string, args?: Record<string, any>) => Promise<T>;
-    };
-    __TAURI_INTERNALS__?: {
-      invoke?: <T = any>(cmd: string, args?: Record<string, any>) => Promise<T>;
-    };
-  }
-}
-
-function getTauriInvoker() {
-  return window.__TAURI__?.core?.invoke || window.__TAURI__?.invoke || window.__TAURI_INTERNALS__?.invoke || null;
+function isTauriEnvironment(): boolean {
+  return typeof window !== 'undefined' && ('__TAURI_INTERNALS__' in window || '__TAURI__' in window);
 }
 
 export const api = {
   isTauri(): boolean {
-    return !!getTauriInvoker();
+    return isTauriEnvironment();
   },
 
   async fetchWorkspace(): Promise<WorkspaceFile[]> {
-    const invoker = getTauriInvoker();
-    if (invoker) {
-      const res = await invoker<WorkspaceFile[]>('scan_workspace');
-      return Array.isArray(res) ? res : [];
+    if (isTauriEnvironment()) {
+      try {
+        const res = await invoke<WorkspaceFile[]>('scan_workspace');
+        return Array.isArray(res) ? res : [];
+      } catch (err) {
+        console.warn('scan_workspace failed:', err);
+        return [];
+      }
     }
 
     const res = await fetch('/api/workspace');
@@ -37,10 +28,8 @@ export const api = {
   },
 
   async readDocument(path: string): Promise<DocumentData> {
-    const invoker = getTauriInvoker();
-    if (invoker) {
-      const res = await invoker<DocumentData>('read_document', { path });
-      return res;
+    if (isTauriEnvironment()) {
+      return await invoke<DocumentData>('read_document', { path });
     }
 
     const res = await fetch(`/api/read?path=${encodeURIComponent(path)}`);
@@ -50,9 +39,8 @@ export const api = {
   },
 
   async saveDocument(path: string, htmlContent: string, title?: string): Promise<void> {
-    const invoker = getTauriInvoker();
-    if (invoker) {
-      await invoker('save_document', {
+    if (isTauriEnvironment()) {
+      await invoke('save_document', {
         path,
         htmlContent,
         html_content: htmlContent
@@ -74,3 +62,4 @@ export const api = {
     }
   }
 };
+
