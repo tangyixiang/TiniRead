@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TiniRead - 产品宣传展示</title>
+  <style>
+    :root {
+      --bg-canvas: #09090b;
+      --bg-panel: #18181b;
+      --bg-card: rgba(255, 255, 255, 0.05);
+      --border-color: rgba(255, 255, 255, 0.12);
+      --border-accent: rgba(255, 255, 255, 0.25);
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-dim: #71717a;
+      --accent: #3b82f6;
+      --accent-glow: rgba(59, 130, 246, 0.25);
+      --card-radius: 20px;
+      
+      --slide-bg: #121214;
+      --slide-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.75);
+      --top-bg: rgba(9, 9, 11, 0.85);
+      --cover-bg: radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 70%), linear-gradient(180deg, #18181b 0%, #0d0d0f 100%);
+      --cover-title: #ffffff;
+      --cover-desc: #d4d4d8;
+      --cover-glow: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+      --slide-badge-bg: rgba(255, 255, 255, 0.08);
+      --slide-badge-color: var(--text-muted);
+      --slide-title: #ffffff;
+      --tag-bg: rgba(255, 255, 255, 0.06);
+      --tag-color: var(--text-main);
+      --value-card-bg: rgba(255, 255, 255, 0.04);
+      --value-card-hover: rgba(255, 255, 255, 0.07);
+      --value-title: #ffffff;
+      --slide-6-bg: linear-gradient(180deg, #151518 0%, #0d0d0f 100%);
+      --badge-float-bg: rgba(24, 24, 27, 0.85);
+      --outline-annot-bg: rgba(18, 18, 20, 0.9);
+      --outline-annot-title: #ffffff;
+      --theme-label-bg: rgba(18, 18, 20, 0.92);
+      --theme-label-color: #f4f4f5;
+      --mode-btn-active-bg: var(--text-main);
+      --mode-btn-active-color: #09090b;
+    }
+
+    html.theme-light {
+      --bg-canvas: #f0f0f4;
+      --bg-panel: #ffffff;
+      --bg-card: rgba(0, 0, 0, 0.035);
+      --border-color: rgba(0, 0, 0, 0.09);
+      --border-accent: rgba(0, 0, 0, 0.18);
+      --text-main: #18181b;
+      --text-muted: #71717a;
+      --text-dim: #a1a1aa;
+      --accent: #2563eb;
+      --accent-glow: rgba(37, 99, 235, 0.15);
+      
+      --slide-bg: #ffffff;
+      --slide-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      --top-bg: rgba(240, 240, 244, 0.88);
+      --cover-bg: radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.08), transparent 70%), linear-gradient(180deg, #ffffff 0%, #f4f4f6 100%);
+      --cover-title: #09090b;
+      --cover-desc: #52525b;
+      --cover-glow: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      --slide-badge-bg: rgba(0, 0, 0, 0.05);
+      --slide-badge-color: var(--text-muted);
+      --slide-title: #09090b;
+      --tag-bg: rgba(0, 0, 0, 0.04);
+      --tag-color: var(--text-main);
+      --value-card-bg: rgba(0, 0, 0, 0.025);
+      --value-card-hover: rgba(0, 0, 0, 0.05);
+      --value-title: #09090b;
+      --slide-6-bg: linear-gradient(180deg, #ffffff 0%, #f4f4f6 100%);
+      --badge-float-bg: rgba(255, 255, 255, 0.92);
+      --outline-annot-bg: rgba(255, 255, 255, 0.94);
+      --outline-annot-title: #09090b;
+      --theme-label-bg: rgba(255, 255, 255, 0.95);
+      --theme-label-color: #18181b;
+      --mode-btn-active-bg: #18181b;
+      --mode-btn-active-color: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background-color: var(--bg-canvas);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      user-select: none;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* 顶部导航与控制栏 */
+    .top-bar {
+      height: 56px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--top-bg);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      object-fit: contain;
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--text-main);
+    }
+
+    .brand-tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--tag-bg);
+      color: var(--text-muted);
+      border: 1px solid var(--border-color);
+    }
+
+    .mode-switch-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .header-divider {
+      width: 1px;
+      height: 18px;
+      background: var(--border-color);
+      margin: 0 4px;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .mode-btn:hover {
+      background: var(--bg-card);
+      color: var(--text-main);
+      border-color: var(--border-accent);
+    }
+
+    .mode-btn.active {
+      background: var(--mode-btn-active-bg);
+      color: var(--mode-btn-active-color);
+      border-color: var(--mode-btn-active-bg);
+    }
+
+    /* 幻灯片主体视口 */
+    .viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* 播放器容器 */
+    .slider-stage {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1), height 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* 小红书 3:4 竖屏比例 */
+    .slider-stage.ratio-xhs {
+      width: 540px;
+      height: 720px;
+      max-width: 90vw;
+      max-height: calc(100vh - 150px);
+      aspect-ratio: 3 / 4;
+    }
+
+    /* 宽屏 16:9 模式 */
+    .slider-stage.ratio-wide {
+      width: 960px;
+      height: 580px;
+      max-width: 90vw;
+      max-height: calc(100vh - 150px);
+      aspect-ratio: 16 / 9.6;
+    }
+
+    .slides-wrapper {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      border-radius: var(--card-radius);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      box-shadow: var(--slide-shadow);
+      background: var(--slide-bg);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 32px 30px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(35px);
+      transition: opacity 0.4s ease, transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    .slide.prev {
+      transform: translateX(-35px);
+    }
+
+    /* 幻灯片头部标签与标题 */
+    .slide-header {
+      margin-bottom: 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .slide-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--slide-badge-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--slide-badge-color);
+      margin-bottom: 10px;
+    }
+
+    .slide-title {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      color: var(--slide-title);
+      margin-bottom: 6px;
+    }
+
+    .slide-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 85%;
+      margin: 0 auto;
+    }
+
+    /* 视觉展示区域 */
+    .slide-content {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    /* macOS 视窗模拟外框 */
+    .mac-window {
+      width: 100%;
+      height: 100%;
+      background: #18181b;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    /* Slide 2: 全局视窗专属优化 */
+    .overview-stage {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 0;
+      gap: 14px;
+    }
+
+    .overview-window-container {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+      position: relative;
+    }
+
+    .overview-screenshot {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+      aspect-ratio: 1024 / 669;
+      object-fit: contain;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 20px 48px -10px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
+      display: block;
+    }
+
+    .overview-features-grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      shrink-0: 0;
+    }
+
+    .overview-feat-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 10px 12px;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+
+    .overview-feat-card:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+
+    .feat-card-num {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--text-dim);
+      margin-bottom: 3px;
+    }
+
+    .feat-card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slide-title);
+      margin-bottom: 2px;
+    }
+
+    .feat-card-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
+
+    /* 底部特性标签栏 */
+    .slide-footer {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      z-index: 10;
+    }
+
+    .feature-tag {
+      font-size: 12px;
+      padding: 6px 14px;
+      background: var(--tag-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      color: var(--tag-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-tag-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+
+    /* ================================================= */
+    /* 各幻灯片专属定制样式 */
+    /* ================================================= */
+
+    /* Slide 1: 艺术封面与 Logo */
+    #slide-1 {
+      background: var(--cover-bg);
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 50px 32px;
+    }
+
+    .cover-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      width: 100%;
+    }
+
+    .cover-icon-box {
+      position: relative;
+      margin-bottom: 28px;
+    }
+
+    .cover-icon-glow {
+      position: absolute;
+      inset: -15px;
+      background: var(--cover-glow);
+      filter: blur(20px);
+      border-radius: 40px;
+    }
+
+    .cover-icon {
+      position: relative;
+      width: 110px;
+      height: 110px;
+      border-radius: 24px;
+      object-fit: contain;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+    }
+
+    .cover-brand-title {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--cover-title);
+      margin-bottom: 12px;
+    }
+
+    .cover-brand-desc {
+      font-size: 16px;
+      color: var(--cover-desc);
+      letter-spacing: 0.08em;
+      margin-bottom: 30px;
+      font-weight: 400;
+    }
+
+    .cover-divider {
+      width: 40px;
+      height: 2px;
+      background: var(--border-accent);
+      margin-bottom: 24px;
+    }
+
+    .cover-pill-list {
+      display: flex;
+      gap: 10px;
+    }
+
+    /* Slide 3: 三主题质感对比 - 纯净阅读视图 */
+    .themes-showcase {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      gap: 12px;
+      align-items: stretch;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .theme-card-col {
+      flex: 1;
+      height: 100%;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .theme-card-col:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.35);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    }
+
+    /* 模拟窗口顶部微型工具栏 */
+    .theme-mini-bar {
+      height: 24px;
+      padding: 0 8px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      shrink-0: 0;
+      border-bottom: 1px solid;
+    }
+
+    .theme-mini-title {
+      flex: 1;
+      text-align: center;
+      font-size: 9px;
+      font-weight: 500;
+      padding-right: 18px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      opacity: 0.6;
+    }
+
+    /* 阅读正文排版区域 */
+    .theme-reading-pane {
+      flex: 1;
+      padding: 14px 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+    }
+
+    .theme-article-h1 {
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1.35;
+      margin-bottom: 6px;
+      letter-spacing: -0.01em;
+    }
+
+    .theme-article-lead {
+      font-size: 9.5px;
+      line-height: 1.45;
+      margin-bottom: 10px;
+      opacity: 0.85;
+    }
+
+    .theme-article-h2 {
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.35;
+      margin-bottom: 5px;
+      margin-top: 4px;
+    }
+
+    .theme-article-p {
+      font-size: 9.5px;
+      line-height: 1.5;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .theme-article-quote {
+      border-left: 2px solid;
+      padding: 4px 6px;
+      border-radius: 0 4px 4px 0;
+      font-size: 9px;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      font-style: italic;
+    }
+
+    .theme-article-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 8.5px;
+      padding: 4px 6px;
+      border-radius: 4px;
+      border: 1px solid;
+      margin-top: 2px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    /* 各主题配色映射 */
+    /* 1. 纯白晨曦 */
+    .theme-card-col.theme-style-light {
+      background: #ffffff;
+      border-color: #e1e1e6;
+    }
+    .theme-style-light .theme-mini-bar {
+      background: #f4f4f6;
+      border-color: #ececef;
+      color: #71717a;
+    }
+    .theme-style-light .theme-reading-pane {
+      background: #ffffff;
+      color: #18181b;
+    }
+    .theme-style-light .theme-article-h1 { color: #09090b; }
+    .theme-style-light .theme-article-h2 { color: #18181b; }
+    .theme-style-light .theme-article-quote {
+      background: #f9f9fb;
+      border-color: #e4e4e7;
+      color: #52525b;
+    }
+    .theme-style-light .theme-article-code {
+      background: rgba(37, 99, 235, 0.08);
+      border-color: rgba(37, 99, 235, 0.16);
+      color: #1d4ed8;
+    }
+
+    /* 2. 暖阳纸感 */
+    .theme-card-col.theme-style-warm {
+      background: #fffdf9;
+      border-color: #e2d8c3;
+    }
+    .theme-style-warm .theme-mini-bar {
+      background: #f5f2eb;
+      border-color: #ede6d8;
+      color: #78716c;
+    }
+    .theme-style-warm .theme-reading-pane {
+      background: #fffdf9;
+      color: #292524;
+    }
+    .theme-style-warm .theme-article-h1 { color: #1c1917; }
+    .theme-style-warm .theme-article-h2 { color: #292524; }
+    .theme-style-warm .theme-article-quote {
+      background: #f5eee1;
+      border-color: #e6dac6;
+      color: #57534e;
+    }
+    .theme-style-warm .theme-article-code {
+      background: rgba(30, 64, 175, 0.07);
+      border-color: rgba(30, 64, 175, 0.15);
+      color: #1e40af;
+    }
+
+    /* 3. 黑曜暗色 */
+    .theme-card-col.theme-style-dark {
+      background: #1a1a1e;
+      border-color: #3f3f46;
+    }
+    .theme-style-dark .theme-mini-bar {
+      background: #121214;
+      border-color: #27272a;
+      color: #a1a1aa;
+    }
+    .theme-style-dark .theme-reading-pane {
+      background: #1a1a1e;
+      color: #f4f4f5;
+    }
+    .theme-style-dark .theme-article-h1 { color: #ffffff; }
+    .theme-style-dark .theme-article-h2 { color: #f4f4f5; }
+    .theme-style-dark .theme-article-quote {
+      background: #222227;
+      border-color: #333338;
+      color: #d4d4d8;
+    }
+    .theme-style-dark .theme-article-code {
+      background: rgba(59, 130, 246, 0.15);
+      border-color: rgba(59, 130, 246, 0.25);
+      color: #93c5fd;
+    }
+
+    .theme-card-label {
+      padding: 9px 6px;
+      background: rgba(18, 18, 20, 0.92);
+      backdrop-filter: blur(8px);
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      border-top: 1px solid var(--border-color);
+      color: #f4f4f5;
+      shrink-0: 0;
+    }
+
+    /* Slide 4: 阅读排版美学 */
+    .reading-highlight-wrap {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .reading-highlight-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 25% 15%;
+    }
+
+    .reading-badge-float {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      right: 16px;
+      background: rgba(24, 24, 27, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .reading-badge-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: #f4f4f5;
+    }
+
+    .reading-badge-desc {
+      font-size: 11px;
+      color: #a1a1aa;
+    }
+
+    /* Slide 5: 实时大纲导航 */
+    .outline-split-view {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .outline-split-view img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: right top;
+    }
+
+    .outline-annotation {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      max-width: 220px;
+      background: var(--outline-annot-bg);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .outline-annotation-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--outline-annot-title);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .outline-annotation-desc {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Slide 6: 纯粹理念总结 */
+    #slide-6 {
+      background: var(--slide-6-bg);
+    }
+
+    .values-grid {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      grid-gap: 12px;
+    }
+
+    .value-card {
+      background: var(--value-card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .value-card:hover {
+      background: var(--value-card-hover);
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+
+    .value-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+
+    .value-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--value-title);
+      margin-bottom: 6px;
+    }
+
+    .value-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* 底部控制器与分页器 */
+    .bottom-bar {
+      height: 64px;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--border-color);
+      background: var(--top-bg);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .counter-display {
+      font-size: 13px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-muted);
+    }
+
+    .current-idx {
+      color: var(--text-main);
+      font-size: 15px;
+    }
+
+    .indicators-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 24px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-accent);
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .dot.active {
+      background: var(--text-main);
+      width: 38px;
+    }
+
+    .nav-btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--border-accent);
+      border-color: var(--border-accent);
+    }
+
+    .nav-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .keyboard-hint {
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .kbd {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      font-size: 10px;
+      font-family: monospace;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <header class="top-bar">
+    <div class="brand-group">
+      <img src="./showcase-assets/icon.png" alt="TiniRead" class="brand-icon">
+      <span class="brand-title">TiniRead</span>
+      <span class="brand-tag">宣传画册演示</span>
+    </div>
+
+    <div class="mode-switch-group">
+      <button class="mode-btn active" id="btn-xhs" onclick="switchRatio('ratio-xhs')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+          <line x1="12" y1="18" x2="12.01" y2="18"></line>
+        </svg>
+        小红书 3:4 比例
+      </button>
+      <button class="mode-btn" id="btn-wide" onclick="switchRatio('ratio-wide')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+          <line x1="8" y1="21" x2="16" y2="21"></line>
+          <line x1="12" y1="17" x2="12" y2="21"></line>
+        </svg>
+        宽屏演示
+      </button>
+
+      <div class="header-divider"></div>
+
+      <button class="mode-btn active" id="btn-theme-dark" onclick="switchTheme('dark')" title="暗色模式">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+        </svg>
+        暗色模式
+      </button>
+      <button class="mode-btn" id="btn-theme-light" onclick="switchTheme('light')" title="浅色模式">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"></circle>
+          <line x1="12" y1="1" x2="12" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="23"></line>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+          <line x1="1" y1="12" x2="3" y2="12"></line>
+          <line x1="21" y1="12" x2="23" y2="12"></line>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+        </svg>
+        浅色模式
+      </button>
+    </div>
+  </header>
+
+  <!-- 幻灯片主舞台 -->
+  <main class="viewport">
+    <div class="slider-stage ratio-xhs" id="stage">
+      <div class="slides-wrapper">
+
+        <!-- Slide 1: 艺术封面与 Logo -->
+        <div class="slide active" id="slide-1">
+          <div class="cover-container">
+            <div class="slide-badge">COVER // 01</div>
+            <div class="cover-icon-box">
+              <div class="cover-icon-glow"></div>
+              <img src="./showcase-assets/icon.png" alt="TiniRead Logo" class="cover-icon">
+            </div>
+            <h1 class="cover-brand-title">TiniRead</h1>
+            <p class="cover-brand-desc">Markdown 阅读，Read simply</p>
+            <div class="cover-divider"></div>
+            <div class="cover-pill-list">
+              <span class="feature-tag"><span class="feature-tag-dot"></span>极简克制</span>
+              <span class="feature-tag"><span class="feature-tag-dot"></span>沉浸专注</span>
+              <span class="feature-tag"><span class="feature-tag-dot"></span>本地离线</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 2: 全局视窗 -->
+        <div class="slide" id="slide-2">
+          <div class="slide-header">
+            <div class="slide-badge">OVERVIEW // 02</div>
+            <h2 class="slide-title">全局掌控 · 层次分明</h2>
+            <p class="slide-subtitle">现代三栏与双栏随心切换，工作区检索与即开即读</p>
+          </div>
+          <div class="overview-stage">
+            <div class="overview-window-container">
+              <img src="./showcase-assets/light.png" alt="TiniRead 全局" class="overview-screenshot">
+            </div>
+            <div class="overview-features-grid">
+              <div class="overview-feat-card">
+                <div class="feat-card-num">01 / LAYOUT</div>
+                <div class="feat-card-title">三栏弹性折叠</div>
+                <div class="feat-card-desc">专注、双栏、三栏按需随心切换</div>
+              </div>
+              <div class="overview-feat-card">
+                <div class="feat-card-num">02 / SEARCH</div>
+                <div class="feat-card-title">工作区即时检索</div>
+                <div class="feat-card-desc">毫秒级模糊检索全部本地文档</div>
+              </div>
+              <div class="overview-feat-card">
+                <div class="feat-card-num">03 / HIGHLIGHT</div>
+                <div class="feat-card-title">划线与历史聚合</div>
+                <div class="feat-card-desc">重点批注与最近记录清晰回顾</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: 3 个主题风格 -->
+        <div class="slide" id="slide-3">
+          <div class="slide-header">
+            <div class="slide-badge">THEMES // 03</div>
+            <h2 class="slide-title">多重质感 · 随光而变</h2>
+            <p class="slide-subtitle">纯白晨曦、暖阳纸感、深夜黑曜，精心调校的阅读色温</p>
+          </div>
+          <div class="slide-content">
+            <div class="themes-showcase">
+              <!-- 纯白晨曦 -->
+              <div class="theme-card-col theme-style-light">
+                <div class="theme-mini-bar">
+                  <span class="traffic-dot traffic-close"></span>
+                  <span class="traffic-dot traffic-min"></span>
+                  <span class="traffic-dot traffic-max"></span>
+                  <span class="theme-mini-title">04-长文阅读.md</span>
+                </div>
+                <div class="theme-reading-pane">
+                  <div class="theme-article-h1">沉浸式阅读与排版美学</div>
+                  <div class="theme-article-lead">在数字时代，阅读是注意力与思维模型的深度共振。</div>
+                  <div class="theme-article-h2">第一章：字体与网格</div>
+                  <div class="theme-article-p">网格系统是秩序的起点，在无意识中引导视线流动的节律感。</div>
+                  <div class="theme-article-quote">
+                    留白是思维消化的缓冲地带，回归阅读主体。
+                  </div>
+                  <div class="theme-article-code">
+                    <code>line-height: 1.75;</code>
+                  </div>
+                </div>
+                <div class="theme-card-label">纯白晨曦 · 清爽纯粹</div>
+              </div>
+
+              <!-- 暖阳纸感 -->
+              <div class="theme-card-col theme-style-warm">
+                <div class="theme-mini-bar">
+                  <span class="traffic-dot traffic-close"></span>
+                  <span class="traffic-dot traffic-min"></span>
+                  <span class="traffic-dot traffic-max"></span>
+                  <span class="theme-mini-title">04-长文阅读.md</span>
+                </div>
+                <div class="theme-reading-pane">
+                  <div class="theme-article-h1">沉浸式阅读与排版美学</div>
+                  <div class="theme-article-lead">在数字时代，阅读是注意力与思维模型的深度共振。</div>
+                  <div class="theme-article-h2">第一章：字体与网格</div>
+                  <div class="theme-article-p">网格系统是秩序的起点，在无意识中引导视线流动的节律感。</div>
+                  <div class="theme-article-quote">
+                    留白是思维消化的缓冲地带，回归阅读主体。
+                  </div>
+                  <div class="theme-article-code">
+                    <code>line-height: 1.75;</code>
+                  </div>
+                </div>
+                <div class="theme-card-label">暖阳纸感 · 舒目温润</div>
+              </div>
+
+              <!-- 黑曜暗色 -->
+              <div class="theme-card-col theme-style-dark">
+                <div class="theme-mini-bar">
+                  <span class="traffic-dot traffic-close"></span>
+                  <span class="traffic-dot traffic-min"></span>
+                  <span class="traffic-dot traffic-max"></span>
+                  <span class="theme-mini-title">04-长文阅读.md</span>
+                </div>
+                <div class="theme-reading-pane">
+                  <div class="theme-article-h1">沉浸式阅读与排版美学</div>
+                  <div class="theme-article-lead">在数字时代，阅读是注意力与思维模型的深度共振。</div>
+                  <div class="theme-article-h2">第一章：字体与网格</div>
+                  <div class="theme-article-p">网格系统是秩序的起点，在无意识中引导视线流动的节律感。</div>
+                  <div class="theme-article-quote">
+                    留白是思维消化的缓冲地带，回归阅读主体。
+                  </div>
+                  <div class="theme-article-code">
+                    <code>line-height: 1.75;</code>
+                  </div>
+                </div>
+                <div class="theme-card-label">黑曜暗色 · 深邃专注</div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span class="feature-tag"><span class="feature-tag-dot"></span>一键色温切换</span>
+            <span class="feature-tag"><span class="feature-tag-dot"></span>高对比度文字</span>
+            <span class="feature-tag"><span class="feature-tag-dot"></span>沉浸护眼享受</span>
+          </div>
+        </div>
+
+        <!-- Slide 4: 文档阅读效果 -->
+        <div class="slide" id="slide-4">
+          <div class="slide-header">
+            <div class="slide-badge">READING // 04</div>
+            <h2 class="slide-title">沉浸阅读 · 呼吸排版</h2>
+            <p class="slide-subtitle">专为长文调校的字距与行高，黄金阅读行宽约束</p>
+          </div>
+          <div class="slide-content">
+            <div class="reading-highlight-wrap">
+              <img src="./showcase-assets/reading.png" alt="排版效果">
+              <div class="reading-badge-float">
+                <div>
+                  <div class="reading-badge-text">黄金行宽 720px - 768px</div>
+                  <div class="reading-badge-desc">行高 1.7 - 1.8 倍自然留白，缓解长文疲劳</div>
+                </div>
+                <span class="feature-tag">排版美学</span>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span class="feature-tag"><span class="feature-tag-dot"></span>多级标题层级</span>
+            <span class="feature-tag"><span class="feature-tag-dot"></span>引用与代码高亮</span>
+            <span class="feature-tag"><span class="feature-tag-dot"></span>专注模式全屏体验</span>
+          </div>
+        </div>
+
+        <!-- Slide 5: 实时大纲导航 -->
+        <div class="slide" id="slide-5">
+          <div class="slide-header">
+            <div class="slide-badge">OUTLINE // 05</div>
+            <h2 class="slide-title">智能大纲 · 进度洞悉</h2>
+            <p class="slide-subtitle">浮动大纲悬浮跟随，层级一目了然，滚动进度毫秒追踪</p>
+          </div>
+          <div class="slide-content">
+            <div class="outline-split-view">
+              <img src="./showcase-assets/reading.png" alt="大纲视图">
+              <div class="outline-annotation">
+                <div class="outline-annotation-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="21" y2="6"></line>
+                    <line x1="8" y1="12" x2="21" y2="12"></line>
+                    <line x1="8" y1="18" x2="21" y2="18"></line>
+                    <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                    <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                    <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                  </svg>
+                  实时大纲追踪
+                </div>
+                <div class="outline-annotation-desc">
+                  随滚动实时高亮当前章节，支持点击即达与进度百分比反馈。
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span class="feature-tag"><span class="feature-tag-dot"></span>层级树状结构</span>
+            <span class="feature-tag"><span class="feature-tag-dot"></span>阅读进度追踪</span>
+            <span class="feature-tag"><span class="feature-tag-dot"></span>毫秒平滑滚动</span>
+          </div>
+        </div>
+
+        <!-- Slide 6: 总结与核心价值 -->
+        <div class="slide" id="slide-6">
+          <div class="slide-header">
+            <div class="slide-badge">ESSENCE // 06</div>
+            <h2 class="slide-title">回归纯粹 · 即刻启程</h2>
+            <p class="slide-subtitle">TiniRead · 重拾文字的专注与力量</p>
+          </div>
+          <div class="slide-content">
+            <div class="values-grid">
+              <div class="value-card">
+                <span class="value-num">01 / LOCAL FIRST</span>
+                <h3 class="value-name">本地优先</h3>
+                <p class="value-text">所有文件直接存储在本地磁盘，无需云端同步授权，隐私绝对自主。</p>
+              </div>
+              <div class="value-card">
+                <span class="value-num">02 / LIGHTWEIGHT</span>
+                <h3 class="value-name">秒级启动</h3>
+                <p class="value-text">极简架构设计，零多余膨胀依赖，瞬时打开数十万字长文档。</p>
+              </div>
+              <div class="value-card">
+                <span class="value-num">03 / DISTRACTION-FREE</span>
+                <h3 class="value-name">纯粹零干扰</h3>
+                <p class="value-text">杜绝花哨弹窗与无意义通知，将整个屏幕的视觉重心交还给内容。</p>
+              </div>
+              <div class="value-card">
+                <span class="value-num">04 / INTUITIVE</span>
+                <h3 class="value-name">开箱即用</h3>
+                <p class="value-text">符合直觉的原生快捷键与排版，无需繁琐配置，即开即读。</p>
+              </div>
+            </div>
+          </div>
+          <div class="slide-footer">
+            <span class="feature-tag"><span class="feature-tag-dot"></span>TiniRead · Read simply</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- 底部控制器与分页 -->
+  <footer class="bottom-bar">
+    <div class="counter-display">
+      <span class="current-idx" id="cur-idx">01</span> / <span id="total-idx">06</span>
+    </div>
+
+    <div class="indicators-group" id="indicators">
+      <div class="dot active" onclick="goToSlide(0)"></div>
+      <div class="dot" onclick="goToSlide(1)"></div>
+      <div class="dot" onclick="goToSlide(2)"></div>
+      <div class="dot" onclick="goToSlide(3)"></div>
+      <div class="dot" onclick="goToSlide(4)"></div>
+      <div class="dot" onclick="goToSlide(5)"></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div class="keyboard-hint">
+        <span class="kbd">←</span>
+        <span class="kbd">→</span>
+        <span>左右键切换</span>
+      </div>
+
+      <div class="nav-btn-group">
+        <button class="nav-btn" id="prev-btn" onclick="prevSlide()" title="上一页">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+        </button>
+        <button class="nav-btn" id="next-btn" onclick="nextSlide()" title="下一页">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="9 18 15 12 9 6"></polyline>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    let currentIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+    const curIdxEl = document.getElementById('cur-idx');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
+    const stage = document.getElementById('stage');
+    const btnXhs = document.getElementById('btn-xhs');
+    const btnWide = document.getElementById('btn-wide');
+
+    function updateSlide() {
+      slides.forEach((slide, index) => {
+        slide.classList.remove('active', 'prev');
+        if (index === currentIndex) {
+          slide.classList.add('active');
+        } else if (index < currentIndex) {
+          slide.classList.add('prev');
+        }
+      });
+
+      dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentIndex);
+      });
+
+      curIdxEl.textContent = String(currentIndex + 1).padStart(2, '0');
+      prevBtn.disabled = currentIndex === 0;
+      nextBtn.disabled = currentIndex === slides.length - 1;
+    }
+
+    function goToSlide(index) {
+      if (index >= 0 && index < slides.length) {
+        currentIndex = index;
+        updateSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (currentIndex < slides.length - 1) {
+        currentIndex++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateSlide();
+      }
+    }
+
+    function switchRatio(ratio) {
+      if (ratio === 'ratio-xhs') {
+        stage.className = 'slider-stage ratio-xhs';
+        btnXhs.classList.add('active');
+        btnWide.classList.remove('active');
+      } else {
+        stage.className = 'slider-stage ratio-wide';
+        btnWide.classList.add('active');
+        btnXhs.classList.remove('active');
+      }
+    }
+
+    // 键盘左右切换监听
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+        prevSlide();
+      }
+    });
+
+    // 触摸滑动支持
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    stage.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    stage.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    }, { passive: true });
+
+    function switchTheme(theme) {
+      const htmlEl = document.documentElement;
+      const btnDark = document.getElementById('btn-theme-dark');
+      const btnLight = document.getElementById('btn-theme-light');
+      if (theme === 'light') {
+        htmlEl.classList.add('theme-light');
+        btnLight.classList.add('active');
+        btnDark.classList.remove('active');
+        try { localStorage.setItem('showcase-theme', 'light'); } catch (e) {}
+      } else {
+        htmlEl.classList.remove('theme-light');
+        btnDark.classList.add('active');
+        btnLight.classList.remove('active');
+        try { localStorage.setItem('showcase-theme', 'dark'); } catch (e) {}
+      }
+    }
+
+    // 初始化读取已存主题偏好
+    try {
+      const savedTheme = localStorage.getItem('showcase-theme');
+      if (savedTheme === 'light') {
+        switchTheme('light');
+      }
+    } catch (e) {}
+
+    // 初始化
+    updateSlide();
+  </script>
+</body>
+</html>
