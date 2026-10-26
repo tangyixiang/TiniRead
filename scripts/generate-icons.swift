@@ -140,8 +140,7 @@ if FileManager.default.fileExists(atPath: macICNSSource.path) {
 let targets = [
     projectDir.appendingPathComponent("app-icon.png"),
     projectDir.appendingPathComponent("public/app-icon.png"),
-    projectDir.appendingPathComponent("src/assets/app-icon.png"),
-    projectDir.appendingPathComponent("showcase-assets/icon.png")
+    projectDir.appendingPathComponent("src/assets/app-icon.png")
 ]
 
 for target in targets {
